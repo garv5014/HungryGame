@@ -1,0 +1,36 @@
+@inject GameInfo gameInfo
+<EditForm Model="@NewGame" OnValidSubmit="@HandleValidSubmit">
+    <label>
+        Rows
+        <InputNumber DisplayName="Rows" @bind-Value="NewGame.NumRows" />
+    </label>
+    <label>
+        Columns
+        <InputNumber DisplayName="Columns" @bind-Value="NewGame.NumColumns" />
+    </label>
+    <label>
+        Secret Code
+        <InputText type="password" DisplayName="Secret Code" @bind-Value="NewGame.SecretCode" />
+    </label>
+    <button type="submit">Start Game</button>
+</EditForm>
+
+@code
+{
+    private class NewGameInfo
+    {
+        public int NumRows { get; set; } = 15;
+        public int NumColumns { get; set; } = 15;
+        public string SecretCode { get; set; } = string.Empty;
+    }
+    private NewGameInfo NewGame = new();
+
+    private async Task HandleValidSubmit()
+    {
+        gameInfo.StartGame(NewGame.NumRows, NewGame.NumColumns, NewGame.SecretCode);
+        await OnGameStarted.InvokeAsync();
+    }
+
+    [Parameter]
+    public EventCallback OnGameStarted{ get; set; }
+}

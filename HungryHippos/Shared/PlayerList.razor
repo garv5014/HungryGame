@@ -1,0 +1,20 @@
+﻿@inject GameInfo gameInfo
+
+<h3>PlayerList</h3>
+<ul>
+    @foreach(var p in gameInfo.GetPlayers())
+    {
+        <li>@p.Id: @p.Name (@p.Score)</li>
+    }
+</ul>
+
+@code {
+    protected override void OnInitialized()
+    {
+        var timer = new Timer(new TimerCallback(_ =>
+        {
+            InvokeAsync(() => StateHasChanged());
+
+        }), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
+    }
+}

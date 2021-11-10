@@ -1,0 +1,74 @@
+﻿@inject GameInfo gameInfo
+@using System.ComponentModel.DataAnnotations;
+@using Microsoft.AspNetCore.Mvc
+
+@if (joined)
+{
+    <div class="w-50">
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-1">
+                <button @onclick="moveUp">⬆</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-1">
+                <button @onclick="moveLeft">⬅</button>
+            </div>
+            <div class="col-1"></div>
+            <div class="col-1">
+                <button @onclick="moveRight">➡</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-1">
+                <button @onclick="moveDown">⬇</button>
+            </div>
+        </div>
+    </div>
+
+}
+else if(gameAlreadyStarted)
+{
+    <div class="error">Too late.  Game already started.</div>
+}
+else
+{
+    <EditForm Model="@joinPlayerInfo" OnValidSubmit="@HandleValidSubmit">
+        <InputText DisplayName="Player Name" @bind-Value="joinPlayerInfo.PlayerName" />
+        <button type="submit">Join Player</button>
+    </EditForm>
+}
+
+@code
+{
+    private class JoinPlayerInfo
+    {
+        [Required]
+        public string? PlayerName { get; set; }
+    }
+    private JoinPlayerInfo joinPlayerInfo = new();
+    private bool joined = false;
+    private bool gameAlreadyStarted = false;
+    private string token = null;
+
+    private void HandleValidSubmit()
+    {
+        try
+        {
+            token = gameInfo.JoinPlayer(joinPlayerInfo?.PlayerName);
+            joined = true;
+            joinPlayerInfo.PlayerName = null;
+        }
+        catch (GameAlreadyStartedException)
+        {
+            gameAlreadyStarted = true;
+        }
+    }
+
+    private async Task moveUp() => gameInfo.Move(token, Direction.Up);
+    private async Task moveRight() => gameInfo.Move(token, Direction.Right);
+    private async Task moveLeft() => gameInfo.Move(token, Direction.Left);
+    private async Task moveDown() => gameInfo.Move(token, Direction.Down);
+}

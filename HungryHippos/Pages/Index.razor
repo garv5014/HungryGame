@@ -1,9 +1,23 @@
 ﻿@page "/"
+@inject GameInfo gameInfo
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Hungry Hippos</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Play Hungry Hippos</h1>
+@if (!gameInfo.IsGameStarted)
+{
+    <StartGame OnGameStarted=@GameStartedHandler />
+}
+else
+{
+    <Board />
+}
+<PlayerList />
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code
+{
+    private void GameStartedHandler()
+    {
+        StateHasChanged();
+    }
+}
