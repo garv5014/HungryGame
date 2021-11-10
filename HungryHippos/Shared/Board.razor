@@ -12,7 +12,7 @@
 
                 <td>
                     <span class="text-center">
-                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? CellIcon : ""))
+                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? CellIcon : " "))
                     </span>
                 </td>
             }

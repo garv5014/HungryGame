@@ -93,6 +93,9 @@ public class GameInfo
 
     public void Move(string playerToken, Direction direction)
     {
+        if (Interlocked.Read(ref isGameStarted) == 0)
+            return;
+
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
         var currentLocation = cell.Location;
