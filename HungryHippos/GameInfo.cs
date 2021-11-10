@@ -34,12 +34,17 @@ public class GameInfo
         MaxRows = numRows;
         MaxCols = numColumns;
 
+        initializeGame();
+    }
+
+    private void initializeGame()
+    {
         lock (lockObject)
         {
             cells.Clear();
-            for (int r = 0; r < numRows; r++)
+            for (int r = 0; r < MaxRows; r++)
             {
-                for (int c = 0; c < numColumns; c++)
+                for (int c = 0; c < MaxCols; c++)
                 {
                     Location location = new Location(r, c);
                     cells.TryAdd(location, new Cell(location, true, null));
@@ -51,14 +56,35 @@ public class GameInfo
                 Location newLocation;
                 do
                 {
-                    newLocation = new Location(rnd.Next(numRows), rnd.Next(numColumns));
+                    newLocation = new Location(rnd.Next(MaxRows), rnd.Next(MaxCols));
                 }
                 while (cells[newLocation].OccupiedBy != null);
                 cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value };
+                p.Value.Score = 0;
             }
 
             Interlocked.Increment(ref isGameStarted);
         }
+
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void ResetGame(string secretCode)
+    {
+        if(secretCode != config["SECRET_CODE"] || Interlocked.Read(ref isGameStarted) == 0)
+        {
+            return;
+        }
+
+        Interlocked.Exchange(ref isGameStarted, 0);
+        lock(lockObject)
+        {
+            foreach(var p in players)
+            {
+                p.Value.Score = 0;
+            }
+        }
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Cell GetCell(int row, int col) => cells[new Location(row, col)];

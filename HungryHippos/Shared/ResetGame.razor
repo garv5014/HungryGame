@@ -1,0 +1,28 @@
+﻿@inject GameInfo gameInfo
+
+@if (isVisible)
+{
+    <div class="border border-primary m-3 p-3">
+        <a @onclick="toggleVisibility" style="float: right">Reset Game ⏫</a>
+        <br />
+        <input type="password" placeholder="secret code" @bind-value=secretCode size="4" />
+        <button @onclick="reset">Reset</button>
+    </div>
+}
+else
+{
+    <a @onclick="toggleVisibility">Reset Game ⏬</a>
+}
+
+@code {
+    private string secretCode;
+    private void reset()
+    {
+        gameInfo.ResetGame(secretCode);
+    }
+    private bool isVisible = false;
+    private void toggleVisibility()
+    {
+        isVisible = !isVisible;
+    }
+}

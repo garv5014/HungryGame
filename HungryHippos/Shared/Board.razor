@@ -12,7 +12,7 @@
 
                 <td>
                     <span class="text-center">
-                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? CellIcon : " "))
+                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : " "))
                     </span>
                 </td>
             }
@@ -21,8 +21,9 @@
 </table>
 
 @code {
-    [Parameter][EditorRequired]
-    public string? CellIcon{  get;  set; }
+
+    [CascadingParameter]
+    public SharedStateClass SharedState{  get;  set; }
 
     protected override void OnInitialized()
     {

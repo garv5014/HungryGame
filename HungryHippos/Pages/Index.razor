@@ -2,24 +2,33 @@
 @inject GameInfo gameInfo
 
 <PageTitle>Hungry Hippos</PageTitle>
+<div style="float: right">
+    @if (gameInfo.IsGameStarted)
+    {
+        <ResetGame />
+    }
+</div>
 
 <h1>Play Hungry Hippos</h1>
-@if (!gameInfo.IsGameStarted)
+<CascadingValue Value=SharedState>
+@if (gameInfo.IsGameStarted)
 {
-    <StartGame OnGameStarted=@GameStartedHandler />
+    <Board />
 }
 else
 {
-    <Board CellIcon=@cellIcon />
+    <StartGame />
 }
+</CascadingValue>
 <PlayerList />
 
 @code
 {
-    private string cellIcon;
-    private void GameStartedHandler(string cellIcon)
+
+    public SharedStateClass SharedState { get; set; } = new();
+
+    protected override void OnInitialized()
     {
-        this.cellIcon = cellIcon;
-        StateHasChanged();
+        gameInfo.GameStateChanged += (_, _) => InvokeAsync(() => StateHasChanged());
     }
 }

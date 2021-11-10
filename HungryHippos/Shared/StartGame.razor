@@ -2,19 +2,19 @@
 <EditForm Model="@NewGame" OnValidSubmit="@HandleValidSubmit">
     <label>
         Rows
-        <InputNumber DisplayName="Rows" @bind-Value="NewGame.NumRows" />
+        <InputNumber DisplayName="Rows" @bind-Value="NewGame.NumRows" size="4" />
     </label>
     <label>
         Columns
-        <InputNumber DisplayName="Columns" @bind-Value="NewGame.NumColumns" />
+        <InputNumber DisplayName="Columns" @bind-Value="NewGame.NumColumns" size="4" />
     </label>
     <label>
         Cell Icon
-        <InputText DisplayName="Cell Icon" @bind-Value="NewGame.CellIcon" />
+        <InputText DisplayName="Cell Icon" @bind-Value="NewGame.CellIcon" size="2" maxlength="2" />
     </label>
     <label>
         Secret Code
-        <InputText type="password" DisplayName="Secret Code" @bind-Value="NewGame.SecretCode" />
+        <InputText type="password" DisplayName="Secret Code" @bind-Value="NewGame.SecretCode" size="8" />
     </label>
     <button type="submit">Start Game</button>
 </EditForm>
@@ -30,12 +30,12 @@
     }
     private NewGameInfo NewGame = new();
 
+    [CascadingParameter]
+    public SharedStateClass SharedState{  get;  set; }
+
     private async Task HandleValidSubmit()
     {
+        SharedState.CellIcon = NewGame.CellIcon;
         gameInfo.StartGame(NewGame.NumRows, NewGame.NumColumns, NewGame.SecretCode);
-        await OnGameStarted.InvokeAsync(NewGame.CellIcon);
     }
-
-    [Parameter]
-    public EventCallback<string> OnGameStarted{ get; set; }
 }

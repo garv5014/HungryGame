@@ -1,12 +1,14 @@
 ﻿@inject GameInfo gameInfo
 
-<h3>PlayerList</h3>
-<ul>
-    @foreach(var p in gameInfo.GetPlayers())
-    {
-        <li>@p.Id: @p.Name (@p.Score)</li>
-    }
-</ul>
+<div class="border m-3">
+    <h3>Players</h3>
+    <ul>
+        @foreach (var p in gameInfo.GetPlayers())
+        {
+            <li>@p.Id: @p.Name (@p.Score)</li>
+        }
+    </ul>
+</div>
 
 @code {
     protected override void OnInitialized()
