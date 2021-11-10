@@ -2,14 +2,6 @@
 
 namespace HungryHippos;
 
-public class Player
-{
-    public int Id { get; init; }
-    public string Name { get; init; }
-    public string Token { get; init; }
-    public int Score { get; set; } = 0;
-}
-
 public class GameInfo
 {
     private int number = 0;
@@ -19,7 +11,7 @@ public class GameInfo
     private readonly Random rnd = new Random();
     private readonly IConfiguration config;
     private readonly ILogger<GameInfo> log;
-    private readonly object lockObjeck = new();
+    private readonly object lockObject = new();
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
     public event EventHandler GameStateChanged;
@@ -42,7 +34,7 @@ public class GameInfo
         MaxRows = numRows;
         MaxCols = numColumns;
 
-        lock (lockObjeck)
+        lock (lockObject)
         {
             cells.Clear();
             for (int r = 0; r < numRows; r++)
@@ -98,13 +90,15 @@ public class GameInfo
             return;
 
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
-        if(player == null)
+        if (player == null)
         {
             throw new PlayerNotFoundException();
         }
+
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
+
         var currentLocation = cell.Location;
-        Location newLocation = direction switch
+        var newLocation = direction switch
         {
             Direction.Up => currentLocation with { Row = currentLocation.Row - 1 },
             Direction.Down => currentLocation with { Row = currentLocation.Row + 1 },
@@ -113,26 +107,29 @@ public class GameInfo
             _ => throw new DirectionNotRecognizedException()
         };
 
-        if (newLocation.Row >= 0 && newLocation.Row < MaxRows &&
-            newLocation.Column >= 0 && newLocation.Column < MaxCols &&
-            cells[newLocation].OccupiedBy == null)
+        if (isInBoard(newLocation) && cells[newLocation].OccupiedBy == null)
         {
-            var origDestinationCell = cells[newLocation];
-            if(origDestinationCell.IsPillAvailable)
+            lock (lockObject)
             {
-                player.Score++;
+                var origDestinationCell = cells[newLocation];
+                if (origDestinationCell.IsPillAvailable)
+                {
+                    player.Score++;
+                }
+                var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
+
+                var origSourceCell = cells[currentLocation];
+                var newSourceCell = origSourceCell with { OccupiedBy = null };
+
+                log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
+
+                cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
+                cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
             }
-            var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
-
-            var origSourceCell = cells[currentLocation];
-            var newSourceCell = origSourceCell with { OccupiedBy = null };
-
-            log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
-
-            cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
-            cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
 
             GameStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+
+    private bool isInBoard(Location l) => l.Row >= 0 && l.Row < MaxRows && l.Column >= 0 && l.Column < MaxCols;
 }

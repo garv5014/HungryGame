@@ -9,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<GameInfo>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = builder.Environment.ApplicationName, Version = "v1" });
+});
 
 var app = builder.Build();
 
@@ -21,6 +26,11 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.MapBlazorHub();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{builder.Environment.ApplicationName} v1"));
+}
 app.MapFallbackToPage("/_Host");
 
 //API endpoints
