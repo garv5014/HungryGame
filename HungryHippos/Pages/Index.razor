@@ -2,25 +2,36 @@
 @inject GameInfo gameInfo
 
 <PageTitle>Hungry Hippos</PageTitle>
-<div style="float: right">
-    @if (gameInfo.IsGameStarted)
-    {
-        <ResetGame />
-    }
+<div class="row">
+    <div class="col">
+        <h1>Play Hungry Hippos</h1>
+    </div>
+
+    <div class="col-auto">
+        @if (gameInfo.IsGameStarted)
+        {
+            <ResetGame />
+        }
+    </div>
 </div>
 
-<h1>Play Hungry Hippos</h1>
-<CascadingValue Value=SharedState>
-@if (gameInfo.IsGameStarted)
-{
-    <Board />
-}
-else
-{
-    <StartGame />
-}
-</CascadingValue>
-<PlayerList />
+<div class="row">
+    <CascadingValue Value=SharedState>
+        @if (gameInfo.IsGameStarted)
+        {
+            <div class="col">
+                <Board />
+            </div>
+        }
+        else
+        {
+            <StartGame />
+        }
+    </CascadingValue>
+    <div class="col-2">
+        <PlayerList />
+    </div>
+</div>
 
 @code
 {
