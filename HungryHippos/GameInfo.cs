@@ -93,6 +93,7 @@ public class GameInfo
 
     public void Move(string playerToken, Direction direction)
     {
+        playerToken = playerToken.Replace("\"", "");
         if (Interlocked.Read(ref isGameStarted) == 0)
             return;
 
