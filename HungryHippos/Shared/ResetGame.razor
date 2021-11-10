@@ -1,31 +1,31 @@
 ﻿@inject GameInfo gameInfo
 
-@if (isVisible)
-{
-    <div class="border border-primary m-3 p-3">
+<div class="border border-primary m-3 p-3">
+    @if (isVisible)
+    {
         <a @onclick="toggleVisibility" style="float: right">Reset Game ⏫</a>
         <br />
         <form>
-            <input type="password" @ref="codeRef" placeholder="secret code" @bind-value=secretCode size="4" />
-            <button type="submit" @onclick="reset">Reset</button>
+            <input type="password" @ref="codeRef" placeholder="secret code" @bind-value=secretCode size="4" class="form-control mt-3" />
+            <button type="submit" class="btn btn-secondary mt-2 w-100" @onclick="reset">Reset</button>
         </form>
-    </div>
-}
-else
-{
-    <a @ref="codeRef" @onclick="toggleVisibility">Reset Game ⏬</a>
-}
+    }
+    else
+    {
+        <a @ref="codeRef" @onclick="toggleVisibility">Reset Game ⏬</a>
+    }
+</div>
 
 @code {
-    private EditContext EditContext { get; set; } = new(new object());
-    private string secretCode;
+    private string? secretCode;
     private ElementReference codeRef;
     private void reset()
     {
-        gameInfo.ResetGame(secretCode);
+        if (secretCode != null)
+            gameInfo.ResetGame(secretCode);
     }
     private bool isVisible = false;
-    private async Task toggleVisibility()
+    private void toggleVisibility()
     {
         isVisible = !isVisible;
     }

@@ -9,6 +9,10 @@
 - when you die, you drop a pill worth 50% on the cell you just vacated
 - add a /board endpoint returning state of board [{location, pillValue, playerId}]
 
+#Bugs
+- Table shrinks when no pills in a row/column, it should stay the same size.
+- 
+
 #Premise
 - Eat pills
 - Once all the *initial* pills are gone, battle mode commences 
