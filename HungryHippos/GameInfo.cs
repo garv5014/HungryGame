@@ -22,6 +22,7 @@ public class GameInfo
     private readonly object lockObjeck = new();
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
+    public event EventHandler GameStateChanged;
 
     public GameInfo(IConfiguration config, ILogger<GameInfo> log)
     {
@@ -77,6 +78,7 @@ public class GameInfo
             var id = Interlocked.Increment(ref number);
             var token = Guid.NewGuid().ToString();
             players.AddOrUpdate(id, new Player { Id = id, Name = playerName, Token = token}, (key, value) => value);
+            GameStateChanged?.Invoke(this, EventArgs.Empty);
             return token;
         }
         else
@@ -121,6 +123,8 @@ public class GameInfo
 
             cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
             cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
+
+            GameStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

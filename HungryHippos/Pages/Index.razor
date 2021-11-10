@@ -10,14 +10,16 @@
 }
 else
 {
-    <Board />
+    <Board CellIcon=@cellIcon />
 }
 <PlayerList />
 
 @code
 {
-    private void GameStartedHandler()
+    private string cellIcon;
+    private void GameStartedHandler(string cellIcon)
     {
+        this.cellIcon = cellIcon;
         StateHasChanged();
     }
 }

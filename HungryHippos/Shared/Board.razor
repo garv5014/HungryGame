@@ -12,7 +12,7 @@
 
                 <td>
                     <span class="text-center">
-                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? "🌯" : ""))
+                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? CellIcon : ""))
                     </span>
                 </td>
             }
@@ -21,18 +21,11 @@
 </table>
 
 @code {
-    private System.Timers.Timer timer = new(500);
+    [Parameter][EditorRequired]
+    public string? CellIcon{  get;  set; }
+
     protected override void OnInitialized()
     {
-        timer.Elapsed += (_, _) =>
-        {
-            _ = InvokeAsync(() => StateHasChanged());
-        };
-        timer.Start();
-        //var timer = new Timer(new TimerCallback(_ =>
-        //{
-        //    InvokeAsync(() => StateHasChanged());
-
-        //}), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
+        gameInfo.GameStateChanged += (_, _) => InvokeAsync(() => StateHasChanged());
     }
 }

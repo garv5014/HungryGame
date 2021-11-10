@@ -11,10 +11,6 @@
 @code {
     protected override void OnInitialized()
     {
-        var timer = new Timer(new TimerCallback(_ =>
-        {
-            InvokeAsync(() => StateHasChanged());
-
-        }), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
+        gameInfo.GameStateChanged += (_, _) => InvokeAsync(() => StateHasChanged());
     }
 }
