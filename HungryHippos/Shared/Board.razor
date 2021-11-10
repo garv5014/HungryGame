@@ -12,7 +12,7 @@
 
                 <td>
                     <span class="text-center">
-                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : " "))
+                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : UnicodeFigureSpace_U2007))
                     </span>
                 </td>
             }
@@ -21,6 +21,7 @@
 </table>
 
 @code {
+    const string UnicodeFigureSpace_U2007 = " ";
 
     [CascadingParameter]
     public SharedStateClass SharedState{  get;  set; }
