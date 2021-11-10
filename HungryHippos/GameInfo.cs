@@ -98,6 +98,10 @@ public class GameInfo
             return;
 
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
+        if(player == null)
+        {
+            throw new PlayerNotFoundException();
+        }
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
         var currentLocation = cell.Location;
         Location newLocation = direction switch
