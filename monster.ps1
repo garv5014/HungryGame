@@ -17,13 +17,13 @@ while ($true) {
     write-host "moving right $size"
     for ($i = 0; $i -lt $size; $i++) {
         iwr "$url/move/right?token=$token" | out-null
-        start-sleep -Milliseconds 250
+        #start-sleep -Milliseconds 250
     }
 
     write-host "moving down $size"
     for ($i = 0; $i -lt $size; $i++) {
         iwr "$url/move/down?token=$token" | out-null
-        start-sleep -Milliseconds 250
+        #start-sleep -Milliseconds 250
     }
 
     $size = $size + 1
@@ -31,12 +31,12 @@ while ($true) {
     write-host "moving left $size"
     for ($i = 0; $i -lt $size; $i++) {
         iwr "$url/move/left?token=$token" | out-null
-        start-sleep -Milliseconds 250
+        #start-sleep -Milliseconds 250
     }
 
     write-host "moving up $size"
     for ($i = 0; $i -lt $size; $i++) {
         iwr "$url/move/up?token=$token" | out-null
-        start-sleep -Milliseconds 250
+        #start-sleep -Milliseconds 250
     }
 }
