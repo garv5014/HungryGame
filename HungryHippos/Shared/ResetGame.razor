@@ -5,24 +5,36 @@
     <div class="border border-primary m-3 p-3">
         <a @onclick="toggleVisibility" style="float: right">Reset Game ⏫</a>
         <br />
-        <input type="password" placeholder="secret code" @bind-value=secretCode size="4" />
-        <button @onclick="reset">Reset</button>
+        <form>
+            <input type="password" @ref="codeRef" placeholder="secret code" @bind-value=secretCode size="4" />
+            <button type="submit" @onclick="reset">Reset</button>
+        </form>
     </div>
 }
 else
 {
-    <a @onclick="toggleVisibility">Reset Game ⏬</a>
+    <a @ref="codeRef" @onclick="toggleVisibility">Reset Game ⏬</a>
 }
 
 @code {
+    private EditContext EditContext { get; set; } = new(new object());
     private string secretCode;
+    private ElementReference codeRef;
     private void reset()
     {
         gameInfo.ResetGame(secretCode);
     }
     private bool isVisible = false;
-    private void toggleVisibility()
+    private async Task toggleVisibility()
     {
         isVisible = !isVisible;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isVisible)
+        {
+            await codeRef.FocusAsync();
+        }
     }
 }
