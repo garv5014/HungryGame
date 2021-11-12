@@ -8,12 +8,10 @@
     </div>
 
     <div class="col-auto">
-        <div class="align-middle">
-            <a href="/help">Help</a>
+        <div class="text-end mx-3">            
+                <a href="/help">Help</a>            
         </div>
-    </div>
 
-    <div class="col-auto">
         @if (gameInfo.IsGameStarted)
         {
             <ResetGame />
@@ -34,7 +32,7 @@
             <StartGame />
         }
     </CascadingValue>
-    <div class="col-2">
+    <div class="col-auto">
         <PlayerList />
     </div>
 </div>
