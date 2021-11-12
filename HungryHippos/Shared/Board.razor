@@ -11,9 +11,7 @@
                 var cell = gameInfo.GetCell(row, col) ?? throw new CellNotFoundException();
 
                 <td>
-                    <span class="text-center">
-                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : UnicodeFigureSpace_U2007))
-                    </span>
+                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : " "))
                 </td>
             }
         </tr>

@@ -9,8 +9,7 @@ public interface IRandomService
 
 public class SystemRandomService : IRandomService
 {
-    [ThreadStatic]
-    private static Random random = new ();
+    private Random random = new ();
     public int Next(int maxValue) => random.Next(maxValue);
 }
 
@@ -130,11 +129,11 @@ public class GameInfo
         players.Select(p => p.Value)
             .OrderByDescending(s => s.Score);
 
-    public void Move(string playerToken, Direction direction)
+    public MoveResult Move(string playerToken, Direction direction)
     {
         playerToken = playerToken.Replace("\"", "");
         if (Interlocked.Read(ref isGameStarted) == 0)
-            return;
+            return null;
 
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
         if (player == null)
@@ -156,12 +155,14 @@ public class GameInfo
 
         if (isInBoard(newLocation) && cells[newLocation].OccupiedBy == null)
         {
+            bool ateAPill = false;
             lock (lockObject)
             {
                 var origDestinationCell = cells[newLocation];
                 if (origDestinationCell.IsPillAvailable && pillValues.TryDequeue(out int pointValue))
                 {
                     player.Score += pointValue;
+                    ateAPill = true;
                 }
                 var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
 
@@ -175,6 +176,11 @@ public class GameInfo
             }
 
             GameStateChanged?.Invoke(this, EventArgs.Empty);
+            return new MoveResult(newLocation, ateAPill);
+        }
+        else
+        {
+            return null;
         }
     }
 

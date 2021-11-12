@@ -9,3 +9,5 @@ public class SharedStateClass
 {
     public string CellIcon { get; set; }
 }
+
+public record MoveResult(Location NewLocation, bool AteAPill);

@@ -1,13 +1,35 @@
 ﻿@inject GameInfo gameInfo
 
-<div class="border m-3">
-    <h3>Players</h3>
-    <ul>
+<div class="border m-3 p-1">
+    @if (gameInfo.IsGameStarted)
+    {
+        <h3>Leader Board</h3>
+    }
+    else
+    {
+        <h3>Player List</h3>
+    }
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            @if (gameInfo.IsGameStarted)
+            {
+                <th>Score</th>
+            }
+        </tr>
         @foreach (var p in gameInfo.GetPlayers())
         {
-            <li>@p.Id: @p.Name (@p.Score)</li>
+            <tr>
+                <td align="center">@p.Id</td>
+                <td>@p.Name</td>
+                @if (gameInfo.IsGameStarted)
+                {
+                    <td align="right">@p.Score.ToString("n0")</td>
+                }
+            </tr>
         }
-    </ul>
+    </table>
 </div>
 
 @code {

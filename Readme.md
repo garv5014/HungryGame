@@ -1,7 +1,7 @@
-# Improvements
-- Increase point value of pills as remaining quantity decreases  
-  - pills start off at 1.  every pill eaten increases by 1 point.  
-- return {ateAPill, newLocation} from /move
+﻿# Improvements
+- ☑ Increase point value of pills as remaining quantity decreases  
+  - ☑ pills start off at 1.  every pill eaten increases by 1 point.  
+- ☑ return {ateAPill, newLocation} from /move
 - once all pills are eaten, it becomes a kill match
 - respawn pills on a random interval at a random location for a random point value
 - when attcking, the each player's health is reduced by the other play's health.  
@@ -10,7 +10,7 @@
 - add a /board endpoint returning state of board [{location, pillValue, playerId}]
 
 # Bugs
-- Table shrinks when no pills in a row/column, it should stay the same size.
+- ☑ Table shrinks when no pills in a row/column, it should stay the same size.
 - 
 
 # Premise

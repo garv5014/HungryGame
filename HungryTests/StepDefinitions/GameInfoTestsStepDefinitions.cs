@@ -66,7 +66,8 @@ namespace HungryTests.StepDefinitions
         {
             var game = getGame();
             var token = context.Get<string>(playerName);
-            game.Move(token, moves.Dequeue());
+            MoveResult result = game.Move(token, moves.Dequeue());
+            context.Set(result);
         }
 
         [Then(@"(.*)'s score is (.*)")]
@@ -76,5 +77,20 @@ namespace HungryTests.StepDefinitions
             var players = game.GetPlayers();
             players.First(p => p.Name == playerName).Score.Should().Be(score);
         }
+
+        [Then(@"their new location is \((.*),(.*)\)")]
+        public void ThenPlayersLocationIs(int row, int col)
+        {
+            var moveResult = context.Get<MoveResult>();
+            moveResult.NewLocation.Should().Be(new Location(row, col));
+        }
+
+        [Then(@"they did eat a pill")]
+        public void ThenTheyDidEatAPill()
+        {
+            var moveResult = context.Get<MoveResult>();
+            moveResult.AteAPill.Should().BeTrue();
+        }
+
     }
 }
