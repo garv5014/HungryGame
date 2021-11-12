@@ -2,24 +2,38 @@
 
 namespace HungryHippos;
 
+public interface IRandomService
+{
+    public int Next(int maxValue);
+}
+
+public class SystemRandomService : IRandomService
+{
+    [ThreadStatic]
+    private static Random random = new ();
+    public int Next(int maxValue) => random.Next(maxValue);
+}
+
 public class GameInfo
 {
     private int number = 0;
     private readonly ConcurrentDictionary<int, Player> players = new();
     private readonly ConcurrentDictionary<Location, Cell> cells = new();
     private long isGameStarted = 0;
-    private readonly Random rnd = new Random();
     private readonly IConfiguration config;
     private readonly ILogger<GameInfo> log;
+    private readonly IRandomService random;
     private readonly object lockObject = new();
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
+    private readonly ConcurrentQueue<int> pillValues = new();
     public event EventHandler GameStateChanged;
 
-    public GameInfo(IConfiguration config, ILogger<GameInfo> log)
+    public GameInfo(IConfiguration config, ILogger<GameInfo> log, IRandomService random)
     {
         this.config = config ?? throw new ArgumentNullException(nameof(config));
         this.log = log;
+        this.random = random;
     }
 
     public bool IsGameStarted => Interlocked.Read(ref isGameStarted) != 0;
@@ -33,6 +47,7 @@ public class GameInfo
 
         MaxRows = numRows;
         MaxCols = numColumns;
+
 
         initializeGame();
     }
@@ -56,11 +71,17 @@ public class GameInfo
                 Location newLocation;
                 do
                 {
-                    newLocation = new Location(rnd.Next(MaxRows), rnd.Next(MaxCols));
+                    newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
                 }
                 while (cells[newLocation].OccupiedBy != null);
                 cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value };
                 p.Value.Score = 0;
+            }
+
+            pillValues.Clear();
+            for(int i = 1; i <= MaxRows * MaxCols; i++)
+            {
+                pillValues.Enqueue(i);
             }
 
             Interlocked.Increment(ref isGameStarted);
@@ -138,9 +159,9 @@ public class GameInfo
             lock (lockObject)
             {
                 var origDestinationCell = cells[newLocation];
-                if (origDestinationCell.IsPillAvailable)
+                if (origDestinationCell.IsPillAvailable && pillValues.TryDequeue(out int pointValue))
                 {
-                    player.Score++;
+                    player.Score += pointValue;
                 }
                 var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
 
