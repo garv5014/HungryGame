@@ -1,0 +1,36 @@
+﻿@page "/help"
+@inject NavigationManager navigationManager
+
+<PageTitle>Instructions / Help</PageTitle>
+<div class="h1">
+    <h1>Help &amp; Instructions</h1>
+</div>
+
+<div class="container w-50">
+    <ol>
+        <li>
+            <span>Make a request to</span>
+            <pre>@(myurl)join?userName={yourName}</pre>
+            <span>That call will return a token.  Save that token.</span>
+        </li>
+        <li>
+            <span>Once the game starts, send requests to </span>
+            <pre>@(myurl)move/left?token={yourToken}</pre>
+            or
+            <pre>@(myurl)move/right?token={yourToken}</pre>
+            or
+            <pre>@(myurl)move/up?token={yourToken}</pre>
+            or
+            <pre>@(myurl)move/down?token={yourToken}</pre>
+        </li>
+    </ol>
+</div>
+@code {
+    string myurl;
+
+    protected override void OnInitialized()
+    {
+        myurl = navigationManager.BaseUri;
+    }
+
+}
