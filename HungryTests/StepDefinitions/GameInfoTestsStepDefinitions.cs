@@ -37,7 +37,13 @@ namespace HungryTests.StepDefinitions
                 configMock.Setup(m => m["SECRET_CODE"]).Returns(SECRET_CODE);
                 var loggerMock = new Mock<ILogger<GameInfo>>();
                 var randomMock = new Mock<IRandomService>();
-                randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() => lastRandom++);
+                randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() => 
+                {
+                    lastRandom++;
+                    if(lastRandom > 2)
+                        lastRandom = 0;
+                    return lastRandom;
+                });
                 game = new GameInfo(configMock.Object, loggerMock.Object, randomMock.Object);
                 context.Set(game);
             }
@@ -45,6 +51,7 @@ namespace HungryTests.StepDefinitions
         }
 
         [Given(@"(.*) joins")]
+        [When(@"(.*) joins")]
         public void GivenPlayerJoins(string playerName)
         {
             var game = getGame();
@@ -58,7 +65,6 @@ namespace HungryTests.StepDefinitions
             var game = getGame();
             game.StartGame(numRows, numColumns, SECRET_CODE);
         }
-
 
         [When(@"(.*) eats a pill")]
         [When(@"(.*) eats another pill")]
@@ -90,6 +96,20 @@ namespace HungryTests.StepDefinitions
         {
             var moveResult = context.Get<MoveResult>();
             moveResult.AteAPill.Should().BeTrue();
+        }
+
+        [Then(@"(.*) gets a valid token")]
+        public void Thenplayergetsavalidtoken(string playerName)
+        {
+            var token = context.Get<string>(playerName);
+            token.Should().NotBeNullOrEmpty();
+        }
+
+        [Then(@"there are two players")]
+        public void Giventherearetwoplayers()
+        {
+            var game = getGame();
+            game.GetPlayers().Count().Should().Be(2);
         }
 
     }
