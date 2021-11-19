@@ -9,18 +9,18 @@ public interface IRandomService
 
 public class SystemRandomService : IRandomService
 {
-    private Random random = new ();
+    private Random random = new();
     public int Next(int maxValue) => random.Next(maxValue);
 }
 
-public class GameInfo
+public class GameLogic
 {
     private int number = 0;
     private readonly ConcurrentDictionary<int, Player> players = new();
     private readonly ConcurrentDictionary<Location, Cell> cells = new();
     private long isGameStarted = 0;
     private readonly IConfiguration config;
-    private readonly ILogger<GameInfo> log;
+    private readonly ILogger<GameLogic> log;
     private readonly IRandomService random;
     private readonly object lockObject = new();
     public int MaxRows { get; private set; } = 0;
@@ -28,7 +28,7 @@ public class GameInfo
     private readonly ConcurrentQueue<int> pillValues = new();
     public event EventHandler GameStateChanged;
 
-    public GameInfo(IConfiguration config, ILogger<GameInfo> log, IRandomService random)
+    public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random)
     {
         this.config = config ?? throw new ArgumentNullException(nameof(config));
         this.log = log;
@@ -55,6 +55,11 @@ public class GameInfo
     {
         lock (lockObject)
         {
+            if(players.Count > MaxRows * MaxCols)
+            {
+                throw new TooManyPlayersToStartGameException("too many players");
+            }
+
             cells.Clear();
             for (int r = 0; r < MaxRows; r++)
             {
@@ -67,18 +72,32 @@ public class GameInfo
 
             foreach (var p in players)
             {
-                Location newLocation;
-                do
+                Location newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
+                bool addToRowIfConflict = true;
+                while (cells[newLocation].OccupiedBy != null)
                 {
-                    newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
+                    var newRow = newLocation.Row;
+                    var newCol = newLocation.Column;
+                    if (addToRowIfConflict)
+                        newRow++;
+                    else
+                        newCol++;
+
+                    if (newRow >= MaxRows)
+                        newRow = 0;
+
+                    if (newCol >= MaxCols)
+                        newCol = 0;
+
+                    newLocation = new Location(newRow, newCol);
+                    addToRowIfConflict = !addToRowIfConflict;
                 }
-                while (cells[newLocation].OccupiedBy != null);
                 cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value };
                 p.Value.Score = 0;
             }
 
             pillValues.Clear();
-            for(int i = 1; i <= MaxRows * MaxCols; i++)
+            for (int i = 1; i <= MaxRows * MaxCols; i++)
             {
                 pillValues.Enqueue(i);
             }
@@ -91,15 +110,15 @@ public class GameInfo
 
     public void ResetGame(string secretCode)
     {
-        if(secretCode != config["SECRET_CODE"] || Interlocked.Read(ref isGameStarted) == 0)
+        if (secretCode != config["SECRET_CODE"] || Interlocked.Read(ref isGameStarted) == 0)
         {
             return;
         }
 
         Interlocked.Exchange(ref isGameStarted, 0);
-        lock(lockObject)
+        lock (lockObject)
         {
-            foreach(var p in players)
+            foreach (var p in players)
             {
                 p.Value.Score = 0;
             }
@@ -111,21 +130,38 @@ public class GameInfo
 
     public string JoinPlayer(string playerName)
     {
-        if (Interlocked.Read(ref isGameStarted) == 0)
+        var token = Guid.NewGuid().ToString();
+        log.LogInformation("{playerName} wants to join (will be {token})", playerName, token);
+
+        lock (lockObject)
         {
             var id = Interlocked.Increment(ref number);
-            var token = Guid.NewGuid().ToString();
-            players.AddOrUpdate(id, new Player { Id = id, Name = playerName, Token = token}, (key, value) => value);
+            log.LogDebug("Got lock; new user will be ID# {id}", id);
+
+            var joinedPlayer = players.AddOrUpdate(id, new Player { Id = id, Name = playerName, Token = token }, (key, value) => value);
+
+            if (gameAlreadyInProgress)
+            {
+                var availableSpaces = cells.Where(c => c.Value.OccupiedBy == null).ToList();
+                if(availableSpaces.Any() is false)
+                {
+                    throw new NoAvailableSpaceException("there is no available space");
+                }
+                var randomIndex = random.Next(availableSpaces.Count);
+                var newLocation = availableSpaces[randomIndex].Key;
+                var origCell = cells[newLocation];
+                var newCell = origCell with { OccupiedBy = joinedPlayer, IsPillAvailable = false };
+                cells.TryUpdate(newLocation, newCell, origCell);
+            }
+
             GameStateChanged?.Invoke(this, EventArgs.Empty);
-            return token;
         }
-        else
-        {
-            throw new GameAlreadyStartedException();
-        }
+        return token;
     }
 
-    public IEnumerable<Player> GetPlayers() =>
+    private bool gameAlreadyInProgress => Interlocked.Read(ref isGameStarted) != 0;
+
+    public IEnumerable<Player> GetPlayersByScoreDescending() =>
         players.Select(p => p.Value)
             .OrderByDescending(s => s.Score);
 

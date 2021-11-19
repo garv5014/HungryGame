@@ -4,6 +4,7 @@ using HungryHippos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace HungryTests.StepDefinitions
     {
         private readonly ScenarioContext context;
         private const string SECRET_CODE = nameof(SECRET_CODE);
-        private static int lastRandom = 0;
+        private static int lastRandom = -1;
         private readonly Queue<Direction> moves = new(new[]
         {
             Direction.Left,
@@ -29,22 +30,22 @@ namespace HungryTests.StepDefinitions
             this.context = context;
         }
 
-        private GameInfo getGame()
+        private GameLogic getGame()
         {
-            if (context.TryGetValue(out GameInfo game) is false)
+            if (context.TryGetValue(out GameLogic game) is false)
             {
                 var configMock = new Mock<IConfiguration>();
                 configMock.Setup(m => m["SECRET_CODE"]).Returns(SECRET_CODE);
-                var loggerMock = new Mock<ILogger<GameInfo>>();
+                var loggerMock = new Mock<ILogger<GameLogic>>();
                 var randomMock = new Mock<IRandomService>();
-                randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() => 
+                randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() =>
                 {
                     lastRandom++;
-                    if(lastRandom > 2)
+                    if(lastRandom >= 2)
                         lastRandom = 0;
                     return lastRandom;
                 });
-                game = new GameInfo(configMock.Object, loggerMock.Object, randomMock.Object);
+                game = new GameLogic(configMock.Object, loggerMock.Object, randomMock.Object);
                 context.Set(game);
             }
             return game;
@@ -57,6 +58,31 @@ namespace HungryTests.StepDefinitions
             var game = getGame();
             var token = game.JoinPlayer(playerName);
             context.Add(playerName, token);
+        }
+
+        [Given(@"(.*) players join the game")]
+        public void GivenPlayersJoinTheGame(int numberOfPlayers)
+        {
+            var game = getGame();
+            for (int i = 0; i < numberOfPlayers; i++)
+            {
+                game.JoinPlayer(numberOfPlayers.ToString());
+            }
+        }
+
+        [Then(@"starting a game with (.*) rows, (.*) columns gives a (.*) exeption\.")]
+        public void ThenStartingAGameWithRowsColumnsGivesATooManyPlayersExeption_(int rows, int cols, string exceptionMessage)
+        {
+            var game = getGame();
+            try
+            {
+                game.StartGame(rows, cols, SECRET_CODE);
+                Assert.Fail("Should never make it here");
+            }
+            catch (Exception e)
+            {
+                e.Message.Should().ContainEquivalentOf(exceptionMessage);
+            }
         }
 
         [Given(@"the game starts with (.*) rows, (.*) columns")]
@@ -80,7 +106,7 @@ namespace HungryTests.StepDefinitions
         public void ThenPlayersScoreIs(string playerName, int score)
         {
             var game = getGame();
-            var players = game.GetPlayers();
+            var players = game.GetPlayersByScoreDescending();
             players.First(p => p.Name == playerName).Score.Should().Be(score);
         }
 
@@ -109,7 +135,22 @@ namespace HungryTests.StepDefinitions
         public void Giventherearetwoplayers()
         {
             var game = getGame();
-            game.GetPlayers().Count().Should().Be(2);
+            game.GetPlayersByScoreDescending().Count().Should().Be(2);
+        }
+
+        [Then(@"(.*) cannot join because (.*)")]
+        public void ThenPlayerCannotJoinBecauseThereIsNoAvailableSpace(string playerName, string errorMessage)
+        {
+            var game = getGame();
+            try
+            {
+                game.JoinPlayer(playerName);
+                Assert.Fail("Should never make it here");
+            }
+            catch(Exception ex)
+            {
+                ex.Message.Should().ContainEquivalentOf(errorMessage);
+            }
         }
 
     }
