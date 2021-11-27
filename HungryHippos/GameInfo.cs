@@ -111,18 +111,21 @@ public class GameInfo
 
     public string JoinPlayer(string playerName)
     {
-        if (Interlocked.Read(ref isGameStarted) == 0)
+        var id = Interlocked.Increment(ref number);
+        var token = Guid.NewGuid().ToString();
+        players.AddOrUpdate(id, new Player { Id = id, Name = playerName, Token = token}, (key, value) => value);
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
+
+        if (Interlocked.Read(ref isGameStarted) != 0)
         {
-            var id = Interlocked.Increment(ref number);
-            var token = Guid.NewGuid().ToString();
-            players.AddOrUpdate(id, new Player { Id = id, Name = playerName, Token = token}, (key, value) => value);
-            GameStateChanged?.Invoke(this, EventArgs.Empty);
-            return token;
+            //if already started, place on board
+            lock(lockObject)
+            {
+                var availableLocations = cells.Where(c => c.Value.IsPillAvailable == false && c.Value.OccupiedBy == null);
+
+            }
         }
-        else
-        {
-            throw new GameAlreadyStartedException();
-        }
+        return token;
     }
 
     public IEnumerable<Player> GetPlayers() =>

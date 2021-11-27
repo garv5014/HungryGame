@@ -16,7 +16,7 @@ namespace HungryTests.StepDefinitions
     {
         private readonly ScenarioContext context;
         private const string SECRET_CODE = nameof(SECRET_CODE);
-        private static int lastRandom = 0;
+        private static int lastRandom = -1;
         private readonly Queue<Direction> moves = new(new[]
         {
             Direction.Left,
@@ -37,7 +37,13 @@ namespace HungryTests.StepDefinitions
                 configMock.Setup(m => m["SECRET_CODE"]).Returns(SECRET_CODE);
                 var loggerMock = new Mock<ILogger<GameInfo>>();
                 var randomMock = new Mock<IRandomService>();
-                randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() => lastRandom++);
+                randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() => 
+                {
+                    lastRandom++;
+                    if(lastRandom >= 2)
+                        lastRandom = 0;
+                    return lastRandom;
+                });
                 game = new GameInfo(configMock.Object, loggerMock.Object, randomMock.Object);
                 context.Set(game);
             }
