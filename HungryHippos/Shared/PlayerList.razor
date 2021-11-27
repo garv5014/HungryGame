@@ -1,4 +1,4 @@
-﻿@inject GameInfo gameInfo
+﻿@inject GameLogic gameInfo
 
 <div class="border m-3 p-1">
     @if (gameInfo.IsGameStarted)
@@ -18,7 +18,7 @@
                 <th>Score</th>
             }
         </tr>
-        @foreach (var p in gameInfo.GetPlayers())
+        @foreach (var p in gameInfo.GetPlayersByScoreDescending())
         {
             <tr>
                 <td align="center">@p.Id</td>
