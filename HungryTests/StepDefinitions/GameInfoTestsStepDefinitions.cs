@@ -153,5 +153,11 @@ namespace HungryTests.StepDefinitions
             }
         }
 
+        [When(@"p(.*) attacks p(.*)")]
+        public void WhenPAttacksP(int p0, int p1)
+        {
+            throw new PendingStepException();
+        }
+
     }
 }
