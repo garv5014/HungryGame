@@ -2,6 +2,14 @@
 
 namespace HungryHippos;
 
+public enum GameState : int
+{
+    Joining = 0,
+    Eating = 1,
+    Battle = 2,
+    GameOver = 3
+}
+
 public interface IRandomService
 {
     public int Next(int maxValue);
@@ -26,7 +34,7 @@ public class GameLogic
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
     private readonly ConcurrentQueue<int> pillValues = new();
-    public event EventHandler GameStateChanged;
+    public event EventHandler? GameStateChanged;
 
     public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random)
     {
@@ -36,6 +44,7 @@ public class GameLogic
     }
 
     public bool IsGameStarted => Interlocked.Read(ref isGameStarted) != 0;
+    public GameState CurrentGameState => (GameState)Interlocked.Read(ref isGameStarted);
 
     public void StartGame(int numRows, int numColumns, string secretCode)
     {
@@ -92,7 +101,7 @@ public class GameLogic
                     newLocation = new Location(newRow, newCol);
                     addToRowIfConflict = !addToRowIfConflict;
                 }
-                cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value };
+                cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value, IsPillAvailable=false };
                 p.Value.Score = 0;
             }
 
@@ -209,6 +218,8 @@ public class GameLogic
 
                 cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
                 cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
+
+                changeToBattleModeIfNoMorePillsAvailable();
             }
 
             GameStateChanged?.Invoke(this, EventArgs.Empty);
@@ -217,6 +228,17 @@ public class GameLogic
         else
         {
             return null;
+        }
+    }
+
+    public IEnumerable<Cell> GetBoardState() => cells.Values;
+
+    private void changeToBattleModeIfNoMorePillsAvailable()
+    {
+        var remainingPills = cells.Count(c => c.Value.IsPillAvailable);
+        if (remainingPills == 0)
+        {
+            Interlocked.Increment(ref isGameStarted);
         }
     }
 
