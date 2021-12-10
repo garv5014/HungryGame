@@ -22,3 +22,17 @@ Scenario: 2 player death match on 2x2 board
 	And p2 is declared winner
 	And the game state is GameOver
 
+Scenario: 2 player death match on 3x3 board
+	Given the game state is Joining
+	Given p1 joins
+	And p2 joins
+	And the game starts with 3 rows, 3 columns
+	Then the game state is Eating
+	When p1 moves Left
+	Then p1's score is 1
+	And p1's location is (0,0)
+	When p2 moves Left
+	Then p2's score is 2
+	And p2's location is (1,0)
+	
+

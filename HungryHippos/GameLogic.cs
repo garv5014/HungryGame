@@ -283,7 +283,7 @@ public class GameLogic
         return true;
     }
 
-    public IEnumerable<Cell> GetBoardState() => cells.Values;
+    public IEnumerable<RedactedCell> GetBoardState() => cells.Values.Select(c=>new RedactedCell(c));
 
     private void changeToBattleModeIfNoMorePillsAvailable()
     {

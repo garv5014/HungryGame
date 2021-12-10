@@ -67,12 +67,15 @@ app.MapFallbackToPage("/_Host");
 app.MapGet("/join", (string? userName, string? playerName, GameLogic gameInfo) =>
 {
     var name = userName ?? playerName ?? throw new ArgumentNullException("userName", "Must define either a userName or playerName in the query string.");
-    gameInfo.JoinPlayer(name);
+    return gameInfo.JoinPlayer(name);
 });
 app.MapGet("/move/left", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Left));
 app.MapGet("/move/right", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Right));
 app.MapGet("/move/up", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Up));
 app.MapGet("/move/down", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Down));
 app.MapGet("/users", ([FromServices] GameLogic gameInfo) => gameInfo.GetPlayersByScoreDescending().Select(p => new {p.Name, p.Id, p.Score}));
+app.MapGet("/start", (string password, int rows, int cols, GameLogic gameInfo) => gameInfo.StartGame(rows, cols, password));
+app.MapGet("/reset", (string password, GameLogic gameInfo) => gameInfo.ResetGame(password));
+app.MapGet("/status", ([FromServices] GameLogic gameInfo) => gameInfo.GetBoardState());
 
 app.Run();
