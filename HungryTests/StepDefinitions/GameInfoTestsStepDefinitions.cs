@@ -194,6 +194,13 @@ namespace HungryTests.StepDefinitions
             playerCell.Should().BeNull();
         }
 
+        [Then(@"(.*) is declared winner")]
+        public void ThenPIsDeclaredWinner(string playerName)
+        {
+            var game = getGame();
+            game.CurrentGameState.Should().Be(GameState.GameOver);
+            game.GetPlayersByScoreDescending().First().Name.Should().Be(playerName);
+        }
 
     }
 }
