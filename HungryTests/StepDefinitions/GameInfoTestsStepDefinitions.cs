@@ -41,7 +41,7 @@ namespace HungryTests.StepDefinitions
                 randomMock.Setup(m => m.Next(It.IsAny<int>())).Returns(() =>
                 {
                     lastRandom++;
-                    if(lastRandom >= 2)
+                    if (lastRandom >= 2)
                         lastRandom = 0;
                     return lastRandom;
                 });
@@ -92,24 +92,27 @@ namespace HungryTests.StepDefinitions
             game.StartGame(numRows, numColumns, SECRET_CODE);
         }
 
-        [When(@"(.*) eats a pill")]
-        [When(@"(.*) eats another pill")]
-        public void WhenPlayerEatsAPill(string playerName)
-        {
-            var game = getGame();
-            var token = context.Get<string>(playerName);
-            MoveResult? result = game.Move(token, moves.Dequeue());
-            context.Set(result);
-        }
-
-        [When(@"(.*) moves (.*)")]
-        public void WhenPMovesLeft(string playerName, string direction)
+        [When(@"(.*) moves (.*) and (.*)")]
+        public void WhenPMovesLeft(string playerName, string direction, string action)
         {
             var game = getGame();
             var token = context.Get<string>(playerName);
             var parsedDirection = Enum.Parse<Direction>(direction);
             var moveResult = game.Move(token, parsedDirection);
             context.Set(moveResult);
+
+            if (action == "eats a pill")
+            {
+                moveResult?.AteAPill.Should().BeTrue();
+            }
+            else if (action == "nothing happens")
+            {
+                moveResult.Should().BeNull();
+            }
+            else
+            {
+                moveResult?.AteAPill.Should().BeFalse();
+            }
         }
 
 
@@ -158,7 +161,7 @@ namespace HungryTests.StepDefinitions
                 game.JoinPlayer(playerName);
                 Assert.Fail("Should never make it here");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ex.Message.Should().ContainEquivalentOf(errorMessage);
             }
@@ -200,6 +203,16 @@ namespace HungryTests.StepDefinitions
             var game = getGame();
             game.CurrentGameState.Should().Be(GameState.GameOver);
             game.GetPlayersByScoreDescending().First().Name.Should().Be(playerName);
+        }
+
+        [Then(@"the board looks like")]
+        public void ThenTheBoardLooksLike(Table table)
+        {
+            var game = getGame();
+            var actualBoardState = game.GetBoardState().DrawBoard().Trim();
+            var expectedBoardState = String.Join("\r\n", table.Rows.Select(r => r["Board State"])).Trim();
+
+            actualBoardState.Should().Be(expectedBoardState);
         }
 
     }

@@ -118,7 +118,7 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.Then("the game state is Eating", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
 #line 12
- testRunner.When("p1 moves Left", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+ testRunner.When("p1 moves Left and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
 #line 13
  testRunner.Then("p1\'s score is 1", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
@@ -127,7 +127,7 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.And("p1\'s location is (0,0)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
 #line 15
- testRunner.When("p2 moves Left", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+ testRunner.When("p2 moves Left and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
 #line 16
  testRunner.Then("p2\'s score is 2", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
@@ -139,7 +139,7 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.And("the game state is Battle", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
 #line 19
- testRunner.When("p2 moves Up", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+ testRunner.When("p2 moves Up and attacks", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
 #line 20
  testRunner.Then("p1 is removed from the board", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
@@ -200,7 +200,7 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.Then("the game state is Eating", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
 #line 31
- testRunner.When("p1 moves Left", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+ testRunner.When("p1 moves Left and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
 #line 32
  testRunner.Then("p1\'s score is 1", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
@@ -209,13 +209,199 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.And("p1\'s location is (0,0)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
 #line 34
- testRunner.When("p2 moves Left", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+ testRunner.When("p2 moves Left and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
 #line 35
  testRunner.Then("p2\'s score is 2", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
 #line 36
  testRunner.And("p2\'s location is (1,0)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table1 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table1.AddRow(new string[] {
+                            "1_·"});
+                table1.AddRow(new string[] {
+                            "2_·"});
+                table1.AddRow(new string[] {
+                            "···"});
+#line 37
+ testRunner.And("the board looks like", ((string)(null)), table1, "And ");
+#line hidden
+#line 42
+ testRunner.When("p2 moves Down and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 43
+ testRunner.Then("p2\'s score is 5", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 44
+ testRunner.And("p2\'s location is (2,0)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table2.AddRow(new string[] {
+                            "1_·"});
+                table2.AddRow(new string[] {
+                            "__·"});
+                table2.AddRow(new string[] {
+                            "2··"});
+#line 45
+ testRunner.And("the board looks like", ((string)(null)), table2, "And ");
+#line hidden
+#line 50
+ testRunner.When("p2 moves Right and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 51
+ testRunner.Then("p2\'s score is 9", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 52
+ testRunner.And("p2\'s location is (2,1)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table3.AddRow(new string[] {
+                            "1_·"});
+                table3.AddRow(new string[] {
+                            "__·"});
+                table3.AddRow(new string[] {
+                            "_2·"});
+#line 53
+ testRunner.And("the board looks like", ((string)(null)), table3, "And ");
+#line hidden
+#line 58
+ testRunner.When("p2 moves Right and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 59
+ testRunner.Then("p2\'s score is 14", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 60
+ testRunner.And("p2\'s location is (2,2)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table4.AddRow(new string[] {
+                            "1_·"});
+                table4.AddRow(new string[] {
+                            "__·"});
+                table4.AddRow(new string[] {
+                            "__2"});
+#line 61
+ testRunner.And("the board looks like", ((string)(null)), table4, "And ");
+#line hidden
+#line 66
+ testRunner.When("p1 moves Right and does nothing", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 67
+ testRunner.Then("p1\'s score is 1", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 68
+ testRunner.And("p1\'s location is (0,1)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table5 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table5.AddRow(new string[] {
+                            "_1·"});
+                table5.AddRow(new string[] {
+                            "__·"});
+                table5.AddRow(new string[] {
+                            "__2"});
+#line 69
+ testRunner.And("the board looks like", ((string)(null)), table5, "And ");
+#line hidden
+#line 74
+ testRunner.When("p1 moves Right and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 75
+ testRunner.Then("p1\'s score is 7", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 76
+ testRunner.And("p1\'s location is (0,2)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table6 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table6.AddRow(new string[] {
+                            "__1"});
+                table6.AddRow(new string[] {
+                            "__·"});
+                table6.AddRow(new string[] {
+                            "__2"});
+#line 77
+ testRunner.And("the board looks like", ((string)(null)), table6, "And ");
+#line hidden
+#line 82
+ testRunner.When("p2 moves Up and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 83
+ testRunner.Then("p1\'s score is 7", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 84
+ testRunner.And("p2\'s score is 21", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 85
+ testRunner.And("p2\'s location is (1,2)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table7 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table7.AddRow(new string[] {
+                            "__1"});
+                table7.AddRow(new string[] {
+                            "__2"});
+                table7.AddRow(new string[] {
+                            "___"});
+#line 86
+ testRunner.And("the board looks like", ((string)(null)), table7, "And ");
+#line hidden
+#line 91
+ testRunner.And("the game state is Battle", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 92
+ testRunner.When("p2 moves Up and attacks", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 93
+ testRunner.Then("p1 is removed from the board", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 94
+ testRunner.And("p2\'s score is 14", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 95
+ testRunner.And("p2\'s location is (1,2)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table8 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table8.AddRow(new string[] {
+                            "__·"});
+                table8.AddRow(new string[] {
+                            "__2"});
+                table8.AddRow(new string[] {
+                            "___"});
+#line 96
+ testRunner.And("the board looks like", ((string)(null)), table8, "And ");
+#line hidden
+#line 101
+ testRunner.When("p2 moves Up and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line hidden
+#line 102
+ testRunner.Then("p2\'s score is 18", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 103
+ testRunner.And("p2\'s location is (0,2)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table9 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Board State"});
+                table9.AddRow(new string[] {
+                            "__2"});
+                table9.AddRow(new string[] {
+                            "___"});
+                table9.AddRow(new string[] {
+                            "___"});
+#line 104
+ testRunner.And("the board looks like", ((string)(null)), table9, "And ");
+#line hidden
+#line 109
+ testRunner.And("p2 is declared winner", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 110
+ testRunner.And("the game state is GameOver", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
             }
             this.ScenarioCleanup();
