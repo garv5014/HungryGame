@@ -8,8 +8,8 @@
     </div>
 
     <div class="col-auto">
-        <div class="text-end mx-3">            
-                <a href="/help">Help</a>            
+        <div class="text-end mx-3">
+            <a href="/help">Help</a>
         </div>
 
         @if (gameInfo.IsGameStarted)
@@ -23,9 +23,18 @@
     <CascadingValue Value=SharedState>
         @if (gameInfo.IsGameStarted)
         {
-            <div class="col">
-                <Board />
-            </div>
+            if (gameInfo.IsGameOver)
+            {
+                <div class="border p-5 m=5 col">
+                    <h3 class="text-center">Game Over</h3>
+                </div>
+            }
+            else
+            {
+                <div class="col">
+                    <Board />
+                </div>
+            }
         }
         else
         {
