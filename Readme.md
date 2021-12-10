@@ -2,9 +2,9 @@
 - ☑ Increase point value of pills as remaining quantity decreases  
   - ☑ pills start off at 1.  every pill eaten increases by 1 point.  
 - ☑ return {ateAPill, newLocation} from /move
-- once all pills are eaten, it changes to battle mode
-  - when attcking, the each player's health is reduced by the other play's health.  
-  - If you health ever becomes <= 0, you die.
+- ☑ once all pills are eaten, it changes to battle mode
+  - ☑ when attcking, the each player's health is reduced by the other play's health.  
+  - ☑ If you health ever becomes <= 0, you die.
   - when you die, you drop a pill worth 50% on the cell you just vacated
 - respawn pills on a random interval at a random location for a random point value
 - add a /board endpoint returning state of board [{location, pillValue, playerId}]
