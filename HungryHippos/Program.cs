@@ -64,7 +64,11 @@ if (app.Environment.IsDevelopment())
 app.MapFallbackToPage("/_Host");
 
 //API endpoints
-app.MapGet("/join", (string userName, GameLogic gameInfo) => gameInfo.JoinPlayer(userName));
+app.MapGet("/join", (string? userName, string? playerName, GameLogic gameInfo) =>
+{
+    var name = userName ?? playerName ?? throw new ArgumentNullException("userName", "Must define either a userName or playerName in the query string.");
+    gameInfo.JoinPlayer(name);
+});
 app.MapGet("/move/left", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Left));
 app.MapGet("/move/right", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Right));
 app.MapGet("/move/up", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Up));
