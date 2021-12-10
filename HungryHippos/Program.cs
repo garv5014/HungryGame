@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
-var requestErrorCount = 0;
+var requestErrorCount = 0L;
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -35,16 +35,17 @@ app.UseCors(builder =>
 });
 
 app.UseStaticFiles();
+
+//THROW_ERRORS middleware
 app.Use(async (context, next) =>
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     if(app.Configuration["THROW_ERRORS"] == "true")
     {
-        logger.LogInformation("THROW_ERRORS enabled...every 4th request will die.");
-        requestErrorCount++;
-        if(requestErrorCount % 4 == 0)
+        Interlocked.Increment(ref requestErrorCount);
+        if(Interlocked.Read(ref requestErrorCount) % 4 == 0)
         {
-            requestErrorCount = 0;
+            logger.LogInformation("THROW_ERRORS enabled...every 4th request dies.");
             context.Response.StatusCode = 500;
             await context.Response.WriteAsync("Every 4th request fails!");
             return;
@@ -52,6 +53,7 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+
 app.UseRouting();
 app.MapBlazorHub();
 if (app.Environment.IsDevelopment())
