@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
+var requestErrorCount = 0;
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -11,6 +12,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<GameLogic>();
 builder.Services.AddSingleton<IRandomService, SystemRandomService>();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddCors();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = builder.Environment.ApplicationName, Version = "v1" });
@@ -33,6 +35,21 @@ app.UseCors(builder =>
 });
 
 app.UseStaticFiles();
+app.Use(async (context, next) =>
+{
+    if(app.Configuration["THROW_ERRORS"] != "false")
+    {
+        requestErrorCount++;
+        if(requestErrorCount % 4 == 0)
+        {
+            requestErrorCount = 0;
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsync("Every 4th request fails!");
+            return;
+        }
+    }
+    await next();
+});
 app.UseRouting();
 app.MapBlazorHub();
 if (app.Environment.IsDevelopment())
