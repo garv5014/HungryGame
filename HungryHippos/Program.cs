@@ -37,8 +37,10 @@ app.UseCors(builder =>
 app.UseStaticFiles();
 app.Use(async (context, next) =>
 {
-    if(app.Configuration["THROW_ERRORS"] != "false")
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    if(app.Configuration["THROW_ERRORS"] == "true")
     {
+        logger.LogInformation("THROW_ERRORS enabled...every 4th request will die.");
         requestErrorCount++;
         if(requestErrorCount % 4 == 0)
         {
