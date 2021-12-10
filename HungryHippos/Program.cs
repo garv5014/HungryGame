@@ -40,10 +40,10 @@ app.UseStaticFiles();
 app.Use(async (context, next) =>
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    if(app.Configuration["THROW_ERRORS"] == "true")
+    if (app.Configuration["THROW_ERRORS"] == "true")
     {
         Interlocked.Increment(ref requestErrorCount);
-        if(Interlocked.Read(ref requestErrorCount) % 4 == 0)
+        if (Interlocked.Read(ref requestErrorCount) % 4 == 0)
         {
             logger.LogInformation("THROW_ERRORS enabled...every 4th request dies.");
             context.Response.StatusCode = 500;
@@ -56,24 +56,22 @@ app.Use(async (context, next) =>
 
 app.UseRouting();
 app.MapBlazorHub();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{builder.Environment.ApplicationName} v1"));
-}
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{builder.Environment.ApplicationName} v1"));
+
 app.MapFallbackToPage("/_Host");
 
 //API endpoints
 app.MapGet("/join", (string? userName, string? playerName, GameLogic gameInfo) =>
 {
-    var name = userName ?? playerName ?? throw new ArgumentNullException("userName", "Must define either a userName or playerName in the query string.");
+    var name = userName ?? playerName ?? throw new ArgumentNullException(nameof(userName), "Must define either a userName or playerName in the query string.");
     return gameInfo.JoinPlayer(name);
 });
 app.MapGet("/move/left", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Left));
 app.MapGet("/move/right", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Right));
 app.MapGet("/move/up", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Up));
 app.MapGet("/move/down", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Down));
-app.MapGet("/users", ([FromServices] GameLogic gameInfo) => gameInfo.GetPlayersByScoreDescending().Select(p => new {p.Name, p.Id, p.Score}));
+app.MapGet("/users", ([FromServices] GameLogic gameInfo) => gameInfo.GetPlayersByScoreDescending().Select(p => new { p.Name, p.Id, p.Score }));
 app.MapGet("/start", (string password, int rows, int cols, GameLogic gameInfo) => gameInfo.StartGame(rows, cols, password));
 app.MapGet("/reset", (string password, GameLogic gameInfo) => gameInfo.ResetGame(password));
 app.MapGet("/status", ([FromServices] GameLogic gameInfo) => gameInfo.GetBoardState());
