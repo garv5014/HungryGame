@@ -44,7 +44,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
       - name: Build (Good) Docker Image
-        run: docker build -f ./HungryHippos/Dockerfile -t ${{ secrets.DOCKERHUB_USERNAME }}/hungryhippos .
+        run: docker build -f ./Dockerfile -t ${{ secrets.DOCKERHUB_USERNAME }}/hungryhippos ..
         
       - name: Push (Good) Docker Image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/hungryhippos
