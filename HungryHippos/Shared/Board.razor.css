@@ -1,10 +1,12 @@
-﻿td {
+﻿table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+td {
     width: 26px;
     height: 26px;
     text-align: center;
     vertical-align: central;
-}
-
-table {
-
+    padding: 3px;
 }

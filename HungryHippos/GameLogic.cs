@@ -2,6 +2,14 @@
 
 namespace HungryHippos;
 
+public enum GameState : int
+{
+    Joining = 0,
+    Eating = 1,
+    Battle = 2,
+    GameOver = 3
+}
+
 public interface IRandomService
 {
     public int Next(int maxValue);
@@ -18,7 +26,7 @@ public class GameLogic
     private int number = 0;
     private readonly ConcurrentDictionary<int, Player> players = new();
     private readonly ConcurrentDictionary<Location, Cell> cells = new();
-    private long isGameStarted = 0;
+    private long gameStateValue = 0;
     private readonly IConfiguration config;
     private readonly ILogger<GameLogic> log;
     private readonly IRandomService random;
@@ -26,7 +34,7 @@ public class GameLogic
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
     private readonly ConcurrentQueue<int> pillValues = new();
-    public event EventHandler GameStateChanged;
+    public event EventHandler? GameStateChanged;
 
     public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random)
     {
@@ -35,11 +43,13 @@ public class GameLogic
         this.random = random;
     }
 
-    public bool IsGameStarted => Interlocked.Read(ref isGameStarted) != 0;
+    public bool IsGameStarted => Interlocked.Read(ref gameStateValue) != 0;
+    public GameState CurrentGameState => (GameState)Interlocked.Read(ref gameStateValue);
+    public bool IsGameOver => Interlocked.Read(ref gameStateValue) == 3;
 
     public void StartGame(int numRows, int numColumns, string secretCode)
     {
-        if (secretCode != config["SECRET_CODE"] || Interlocked.Read(ref isGameStarted) != 0)
+        if (secretCode != config["SECRET_CODE"] || Interlocked.Read(ref gameStateValue) != 0)
         {
             return;
         }
@@ -55,7 +65,7 @@ public class GameLogic
     {
         lock (lockObject)
         {
-            if(players.Count > MaxRows * MaxCols)
+            if (players.Count > MaxRows * MaxCols)
             {
                 throw new TooManyPlayersToStartGameException("too many players");
             }
@@ -92,7 +102,7 @@ public class GameLogic
                     newLocation = new Location(newRow, newCol);
                     addToRowIfConflict = !addToRowIfConflict;
                 }
-                cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value };
+                cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value, IsPillAvailable = false };
                 p.Value.Score = 0;
             }
 
@@ -102,7 +112,7 @@ public class GameLogic
                 pillValues.Enqueue(i);
             }
 
-            Interlocked.Increment(ref isGameStarted);
+            Interlocked.Increment(ref gameStateValue);
         }
 
         GameStateChanged?.Invoke(this, EventArgs.Empty);
@@ -110,12 +120,12 @@ public class GameLogic
 
     public void ResetGame(string secretCode)
     {
-        if (secretCode != config["SECRET_CODE"] || Interlocked.Read(ref isGameStarted) == 0)
+        if (secretCode != config["SECRET_CODE"] || Interlocked.Read(ref gameStateValue) == 0)
         {
             return;
         }
 
-        Interlocked.Exchange(ref isGameStarted, 0);
+        Interlocked.Exchange(ref gameStateValue, 0);
         lock (lockObject)
         {
             foreach (var p in players)
@@ -143,7 +153,7 @@ public class GameLogic
             if (gameAlreadyInProgress)
             {
                 var availableSpaces = cells.Where(c => c.Value.OccupiedBy == null).ToList();
-                if(availableSpaces.Any() is false)
+                if (availableSpaces.Any() is false)
                 {
                     throw new NoAvailableSpaceException("there is no available space");
                 }
@@ -159,7 +169,7 @@ public class GameLogic
         return token;
     }
 
-    private bool gameAlreadyInProgress => Interlocked.Read(ref isGameStarted) != 0;
+    private bool gameAlreadyInProgress => Interlocked.Read(ref gameStateValue) != 0;
 
     public IEnumerable<Player> GetPlayersByScoreDescending() =>
         players.Select(p => p.Value)
@@ -168,7 +178,8 @@ public class GameLogic
     public MoveResult Move(string playerToken, Direction direction)
     {
         playerToken = playerToken.Replace("\"", "");
-        if (Interlocked.Read(ref isGameStarted) == 0)
+
+        if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle)
             return null;
 
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
@@ -178,6 +189,10 @@ public class GameLogic
         }
 
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
+        if(cell == null)
+        {
+            return null;
+        }
 
         var currentLocation = cell.Location;
         var newLocation = direction switch
@@ -189,34 +204,97 @@ public class GameLogic
             _ => throw new DirectionNotRecognizedException()
         };
 
-        if (isInBoard(newLocation) && cells[newLocation].OccupiedBy == null)
+        if (isInBoard(newLocation))
         {
-            bool ateAPill = false;
             lock (lockObject)
             {
-                var origDestinationCell = cells[newLocation];
-                if (origDestinationCell.IsPillAvailable && pillValues.TryDequeue(out int pointValue))
+                if (cells[newLocation].OccupiedBy == null)
                 {
-                    player.Score += pointValue;
-                    ateAPill = true;
+                    bool ateAPill = false;
+                    var origDestinationCell = cells[newLocation];
+                    if (origDestinationCell.IsPillAvailable && pillValues.TryDequeue(out int pointValue))
+                    {
+                        player.Score += pointValue;
+                        ateAPill = true;
+                    }
+                    var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
+
+                    var origSourceCell = cells[currentLocation];
+                    var newSourceCell = origSourceCell with { OccupiedBy = null };
+
+                    log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
+
+                    cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
+                    cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
+
+                    changeToBattleModeIfNoMorePillsAvailable();
+
+                    GameStateChanged?.Invoke(this, EventArgs.Empty);
+                    return new MoveResult(newLocation, ateAPill);
                 }
-                var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
+                else if (CurrentGameState == GameState.Battle)
+                {
+                    //decrease the health of both players by the min health of the players
+                    var otherPlayer = cells[newLocation].OccupiedBy;
+                    var currentPlayer = cell.OccupiedBy;
 
-                var origSourceCell = cells[currentLocation];
-                var newSourceCell = origSourceCell with { OccupiedBy = null };
+                    var minHealth = Math.Min(currentPlayer.Score, otherPlayer.Score);
+                    log.LogInformation("Player {currentPlayer} attacking {otherPlayer}", currentPlayer, otherPlayer);
 
-                log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
+                    currentPlayer.Score -= minHealth;
+                    otherPlayer.Score -= minHealth;
+                    log.LogInformation("new scores: {currentPlayerScore}, {otherPlayerScore}", currentPlayer.Score, otherPlayer.Score);
 
-                cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
-                cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
+                    if (removePlayerIfDead(currentPlayer) || removePlayerIfDead(otherPlayer))
+                    {
+                        checkForWinner();
+                    }
+
+                    GameStateChanged?.Invoke(this, EventArgs.Empty);
+                    return new MoveResult(currentLocation, false);
+                }
             }
-
-            GameStateChanged?.Invoke(this, EventArgs.Empty);
-            return new MoveResult(newLocation, ateAPill);
         }
-        else
+
+        return null;
+    }
+
+    private void checkForWinner()
+    {
+        int activePlayers = cells.Count(c => c.Value.OccupiedBy != null);
+        log.LogInformation("checking for winner: {activePlayers} active players", activePlayers);
+
+        if (activePlayers == 1)
         {
-            return null;
+            log.LogInformation("Changing game state from {currentGameState} to {newGameState}", CurrentGameState, (CurrentGameState + 1));
+            Interlocked.Increment(ref gameStateValue);
+        }
+    }
+
+    private bool removePlayerIfDead(Player player)
+    {
+        if (player == null || player.Score > 0)
+            return false;
+
+        log.LogInformation("Removing player from board: {player}", player);
+        var origCell = cells.FirstOrDefault(c => c.Value.OccupiedBy == player);
+        var updatedCell = origCell.Value with { OccupiedBy = null };
+        cells.TryUpdate(origCell.Key, updatedCell, origCell.Value);
+        return true;
+    }
+
+    public IEnumerable<Cell> GetBoardState() => cells.Values;
+
+    private void changeToBattleModeIfNoMorePillsAvailable()
+    {
+        if (CurrentGameState != GameState.Eating)
+            return;
+
+        var remainingPills = cells.Count(c => c.Value.IsPillAvailable);
+        if (remainingPills == 0)
+        {
+            Interlocked.Increment(ref gameStateValue);
+            log.LogInformation("No more pills available, changing game state to {gameState}", CurrentGameState);
         }
     }
 

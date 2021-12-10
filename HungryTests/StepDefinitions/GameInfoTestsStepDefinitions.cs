@@ -102,6 +102,17 @@ namespace HungryTests.StepDefinitions
             context.Set(result);
         }
 
+        [When(@"(.*) moves (.*)")]
+        public void WhenPMovesLeft(string playerName, string direction)
+        {
+            var game = getGame();
+            var token = context.Get<string>(playerName);
+            var parsedDirection = Enum.Parse<Direction>(direction);
+            var moveResult = game.Move(token, parsedDirection);
+            context.Set(moveResult);
+        }
+
+
         [Then(@"(.*)'s score is (.*)")]
         public void ThenPlayersScoreIs(string playerName, int score)
         {
@@ -151,6 +162,44 @@ namespace HungryTests.StepDefinitions
             {
                 ex.Message.Should().ContainEquivalentOf(errorMessage);
             }
+        }
+
+        [Then(@"the game state is (.*)")]
+        [Given(@"the game state is (.*)")]
+        public void ThenTheGamestateIs___(string gameState)
+        {
+            var game = getGame();
+            var expectedGameState = Enum.Parse<GameState>(gameState);
+            game.CurrentGameState.Should().Be(expectedGameState);
+        }
+
+        [Then(@"(.*)'s location is \((.*),(.*)\)")]
+        public void ThenPsLocationIs(string playerName, int row, int col)
+        {
+            var game = getGame();
+            var boardState = game.GetBoardState();
+            var playerCell = boardState.FirstOrDefault(c => c.OccupiedBy?.Name == playerName);
+            if (playerCell == null)
+                throw new ApplicationException("Unable to find player cell");
+            playerCell.Location.Row.Should().Be(row);
+            playerCell.Location.Column.Should().Be(col);
+        }
+
+        [Then(@"(.*) is removed from the board")]
+        public void ThenPIsRemovedFromTheBoard(string playerName)
+        {
+            var game = getGame();
+            var boardState = game.GetBoardState();
+            var playerCell = boardState.FirstOrDefault(c => c.OccupiedBy?.Name == playerName);
+            playerCell.Should().BeNull();
+        }
+
+        [Then(@"(.*) is declared winner")]
+        public void ThenPIsDeclaredWinner(string playerName)
+        {
+            var game = getGame();
+            game.CurrentGameState.Should().Be(GameState.GameOver);
+            game.GetPlayersByScoreDescending().First().Name.Should().Be(playerName);
         }
 
     }
