@@ -44,7 +44,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
       - name: Build (Good) Docker Image
-        run: 
+        run: |
           cd ..
           docker build -f ./HungryHippos/Dockerfile -t ${{ secrets.DOCKERHUB_USERNAME }}/hungryhippos .
         
