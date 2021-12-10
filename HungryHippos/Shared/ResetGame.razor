@@ -6,7 +6,7 @@
         <a @onclick="toggleVisibility" style="float: right">Reset Game ⏫</a>
         <br />
         <form>
-            <input type="password" @ref="codeRef" placeholder="secret code" @bind-value=secretCode size="4" class="form-control mt-3" />
+            <input type="password" @ref="codeRef" placeholder="password" @bind-value=secretCode size="4" class="form-control mt-3" />
             <button type="submit" class="btn btn-secondary mt-2 w-100" @onclick="reset">Reset</button>
         </form>
     }
