@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HungryHippos", "HungryHippo
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{85938023-1BBA-42AF-9AEC-CDC61F5CDE10}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		.github\workflows\main_hungryhippos.yml = .github\workflows\main_hungryhippos.yml
 		monster.ps1 = monster.ps1
 		Readme.md = Readme.md

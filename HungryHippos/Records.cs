@@ -22,7 +22,7 @@ public enum Direction { Up, Down, Left, Right, Undefined };
 
 public class SharedStateClass
 {
-    public string CellIcon { get; set; }
+    public string CellIcon { get; set; } = "🌯";
 }
 
 public record MoveResult(Location NewLocation, bool AteAPill);

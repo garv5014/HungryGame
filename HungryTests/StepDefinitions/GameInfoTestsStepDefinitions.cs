@@ -98,7 +98,7 @@ namespace HungryTests.StepDefinitions
         {
             var game = getGame();
             var token = context.Get<string>(playerName);
-            MoveResult result = game.Move(token, moves.Dequeue());
+            MoveResult? result = game.Move(token, moves.Dequeue());
             context.Set(result);
         }
 

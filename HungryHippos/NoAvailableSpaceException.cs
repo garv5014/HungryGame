@@ -3,7 +3,7 @@
 namespace HungryHippos
 {
     [Serializable]
-    internal class NoAvailableSpaceException : Exception
+    public class NoAvailableSpaceException : Exception
     {
         public NoAvailableSpaceException()
         {

@@ -2,7 +2,7 @@
 
 namespace HungryHippos;
 
-public enum GameState : int
+public enum GameState 
 {
     Joining = 0,
     Eating = 1,
@@ -17,7 +17,7 @@ public interface IRandomService
 
 public class SystemRandomService : IRandomService
 {
-    private Random random = new();
+    private readonly Random random = new();
     public int Next(int maxValue) => random.Next(maxValue);
 }
 
@@ -75,14 +75,14 @@ public class GameLogic
             {
                 for (int c = 0; c < MaxCols; c++)
                 {
-                    Location location = new Location(r, c);
+                    var location = new Location(r, c);
                     cells.TryAdd(location, new Cell(location, true, null));
                 }
             }
 
-            foreach (var p in players)
+            foreach (var player in players.Select(i=>i.Value))
             {
-                Location newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
+                var newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
                 bool addToRowIfConflict = true;
                 while (cells[newLocation].OccupiedBy != null)
                 {
@@ -102,8 +102,8 @@ public class GameLogic
                     newLocation = new Location(newRow, newCol);
                     addToRowIfConflict = !addToRowIfConflict;
                 }
-                cells[newLocation] = cells[newLocation] with { OccupiedBy = p.Value, IsPillAvailable = false };
-                p.Value.Score = 0;
+                cells[newLocation] = cells[newLocation] with { OccupiedBy = player, IsPillAvailable = false };
+                player.Score = 0;
             }
 
             pillValues.Clear();
@@ -175,7 +175,7 @@ public class GameLogic
         players.Select(p => p.Value)
             .OrderByDescending(s => s.Score);
 
-    public MoveResult Move(string playerToken, Direction direction)
+    public MoveResult? Move(string playerToken, Direction direction)
     {
         playerToken = playerToken.Replace("\"", "");
 
@@ -189,7 +189,8 @@ public class GameLogic
         }
 
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
-        if(cell == null)
+        var currentPlayer = cell.OccupiedBy;
+        if(cell == null || currentPlayer == null)
         {
             return null;
         }
@@ -208,7 +209,8 @@ public class GameLogic
         {
             lock (lockObject)
             {
-                if (cells[newLocation].OccupiedBy == null)
+                Player? otherPlayer = cells[newLocation].OccupiedBy;
+                if (otherPlayer == null)
                 {
                     bool ateAPill = false;
                     var origDestinationCell = cells[newLocation];
@@ -235,9 +237,6 @@ public class GameLogic
                 else if (CurrentGameState == GameState.Battle)
                 {
                     //decrease the health of both players by the min health of the players
-                    var otherPlayer = cells[newLocation].OccupiedBy;
-                    var currentPlayer = cell.OccupiedBy;
-
                     var minHealth = Math.Min(currentPlayer.Score, otherPlayer.Score);
                     log.LogInformation("Player {currentPlayer} attacking {otherPlayer}", currentPlayer, otherPlayer);
 

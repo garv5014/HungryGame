@@ -3,8 +3,8 @@
 public class Player
 {
     public int Id { get; init; }
-    public string Name { get; init; }
-    public string Token { get; init; }
+    public string? Name { get; init; }
+    public string? Token { get; init; }
     public int Score { get; set; } = 0;
 }
 
@@ -18,6 +18,6 @@ public class RedactedPlayer
     }
 
     public int Id { get; }
-    public string Name { get; }
+    public string? Name { get; }
     public int Score { get; }
 }
