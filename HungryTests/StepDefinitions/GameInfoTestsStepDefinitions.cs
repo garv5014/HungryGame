@@ -209,8 +209,8 @@ namespace HungryTests.StepDefinitions
         public void ThenTheBoardLooksLike(Table table)
         {
             var game = getGame();
-            var actualBoardState = game.GetBoardState().DrawBoard().Trim();
-            var expectedBoardState = String.Join("\r\n", table.Rows.Select(r => r["Board State"])).Trim();
+            var actualBoardState = game.GetBoardState().DrawBoard().Trim().Replace("\r\n", "\n");
+            var expectedBoardState = String.Join("\r\n", table.Rows.Select(r => r["Board State"])).Trim().Replace("\r\n", "\n");
 
             actualBoardState.Should().Be(expectedBoardState);
         }
