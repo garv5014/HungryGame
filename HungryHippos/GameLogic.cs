@@ -1,8 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace HungryHippos;
 
-public enum GameState 
+public enum GameState
 {
     Joining = 0,
     Eating = 1,
@@ -34,6 +35,7 @@ public class GameLogic
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
     private readonly ConcurrentQueue<int> pillValues = new();
+    private readonly ConcurrentDictionary<Location, int> specialPointValues = new();
     public event EventHandler? GameStateChanged;
 
     public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random)
@@ -214,9 +216,9 @@ public class GameLogic
                 {
                     bool ateAPill = false;
                     var origDestinationCell = cells[newLocation];
-                    if (origDestinationCell.IsPillAvailable && pillValues.TryDequeue(out int pointValue))
+                    if (origDestinationCell.IsPillAvailable)
                     {
-                        player.Score += pointValue;
+                        player.Score += getPointValue(newLocation);
                         ateAPill = true;
                     }
                     var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
@@ -246,6 +248,7 @@ public class GameLogic
 
                     if (removePlayerIfDead(currentPlayer) || removePlayerIfDead(otherPlayer))
                     {
+                        specialPointValues.TryAdd(newLocation, (int)Math.Round(minHealth / 2.0, 0));
                         checkForWinner();
                     }
 
@@ -256,6 +259,18 @@ public class GameLogic
         }
 
         return null;
+    }
+
+    private int getPointValue(Location newLocation)
+    {
+        int pointValue = 0;
+
+        if(!specialPointValues.TryRemove(newLocation, out pointValue))
+        {
+            pillValues.TryDequeue(out pointValue);
+        }
+
+        return pointValue;
     }
 
     private void checkForWinner()
@@ -277,7 +292,7 @@ public class GameLogic
 
         log.LogInformation("Removing player from board: {player}", player);
         var origCell = cells.FirstOrDefault(c => c.Value.OccupiedBy == player);
-        var updatedCell = origCell.Value with { OccupiedBy = null };
+        var updatedCell = origCell.Value with { OccupiedBy = null, IsPillAvailable = true };
         cells.TryUpdate(origCell.Key, updatedCell, origCell.Value);
         return true;
     }
