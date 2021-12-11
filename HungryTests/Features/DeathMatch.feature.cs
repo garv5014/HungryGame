@@ -452,18 +452,12 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.And("the board looks like", ((string)(null)), table12, "And ");
 #line hidden
 #line 131
- testRunner.When("p2 moves Down and eats a pill", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line hidden
-#line 132
  testRunner.Then("p2\'s score is 11", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
-#line 133
- testRunner.And("p2\'s location is (0,2)", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line hidden
-#line 134
+#line 132
  testRunner.And("p2 is declared winner", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
-#line 135
+#line 133
  testRunner.And("the game state is GameOver", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
             }

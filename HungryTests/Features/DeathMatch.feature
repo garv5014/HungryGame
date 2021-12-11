@@ -128,9 +128,7 @@ Scenario: 3 player death match on 3x3 board
 	| __2         |
 	| __·         |
 	| ___         |
-	When p2 moves Down and eats a pill
 	Then p2's score is 11
-	And p2's location is (0,2)
 	And p2 is declared winner
 	And the game state is GameOver
 
