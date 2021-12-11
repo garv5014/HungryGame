@@ -1,3 +1,4 @@
+[CmdletBinding()]
 param(
     [Parameter(HelpMessage = "host and port of server")]    
     [string]$url = "http://localhost:5291",
@@ -10,18 +11,28 @@ function randomDirection {
     return $directions[(get-random -max 4)]
 }
 
-function get-gameState {
-    $r = invoke-restmethod "$url/state"
-    return $r.content
+$client = [System.Net.Http.HttpClient]::new()
+
+function call($path) {
+    $clientResult = $client.GetStringAsync($path).
+        GetAwaiter().
+        GetResult()
+    return $clientResult
 }
 
-$token = invoke-restmethod "$url/join?userName=$name"
+function get-gameState {
+    $r = call "$url/state"
+    return $r
+}
+
+$token = call "$url/join?userName=$name"
 write-host "$name joined game w/token $token"
 
 $gameState = get-gameState
 while ( $gameState -eq "Joining") {
     write-verbose "Game state is $gameState...sleeping"
     Start-Sleep -Seconds 2
+    $gameState = get-gameState
 }
 
 $direction = randomDirection;
@@ -30,7 +41,7 @@ $reqCount = 0;
 while ($true) {
     $reqCount++;
     try {
-        $moveResult = invoke-restmethod "$url/move/$direction/?token=$token"        
+        $moveResult = (call "$url/move/$direction/?token=$token") | ConvertFrom-Json
         if ($null -eq $moveResult -or $moveResult.ateAPill -eq $false) {
             $newDirection = randomDirection
             Write-verbose "$name didn't eat a token going $direction, so I'll try going $newDirection"
@@ -42,7 +53,7 @@ while ($true) {
         break;
     }
 
-    if ($reqCount -gt 100) {
+    if ($reqCount -gt 0) {
         if ((get-gameState) -eq "GameOver") {
             Write-Host "Game over. Player $name ends."
             break;
