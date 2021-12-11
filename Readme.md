@@ -5,9 +5,9 @@
 - ☑ once all pills are eaten, it changes to battle mode
   - ☑ when attcking, the each player's health is reduced by the other play's health.  
   - ☑ If you health ever becomes <= 0, you die.
-  - when you die, you drop a pill worth 50% on the cell you just vacated
+  - ☑ when you die, you drop a pill worth 50% on the cell you just vacated
 - respawn pills on a random interval at a random location for a random point value
-- add a /board endpoint returning state of board [{location, pillValue, playerId}]
+- ☑ add a /board endpoint returning state of board [{location, pillValue, playerId}]
 
 # Bugs
 - ☑ Table shrinks when no pills in a row/column, it should stay the same size.
@@ -15,7 +15,7 @@
 
 # Premise
 - Eat pills
-- Once all the *initial* pills are gone, battle mode commences 
+- Once all the *initial* pills are gone, battle mode commences until 1 player left standing.
 
 # Tournament
 - One round of p v p

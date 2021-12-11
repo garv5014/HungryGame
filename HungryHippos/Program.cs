@@ -74,6 +74,6 @@ app.MapGet("/move/down", (string token, GameLogic gameInfo) => gameInfo.Move(tok
 app.MapGet("/users", ([FromServices] GameLogic gameInfo) => gameInfo.GetPlayersByScoreDescending().Select(p => new { p.Name, p.Id, p.Score }));
 app.MapGet("/start", (string password, int rows, int cols, GameLogic gameInfo) => gameInfo.StartGame(rows, cols, password));
 app.MapGet("/reset", (string password, GameLogic gameInfo) => gameInfo.ResetGame(password));
-app.MapGet("/status", ([FromServices] GameLogic gameInfo) => gameInfo.GetBoardState());
+app.MapGet("/board", ([FromServices] GameLogic gameInfo) => gameInfo.GetBoardState());
 
 app.Run();
