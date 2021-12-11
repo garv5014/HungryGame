@@ -150,7 +150,8 @@ public class GameLogic
             var id = Interlocked.Increment(ref number);
             log.LogDebug("Got lock; new user will be ID# {id}", id);
 
-            var joinedPlayer = players.AddOrUpdate(id, new Player { Id = id, Name = playerName, Token = token }, (key, value) => value);
+            var joinedPlayer = new Player { Id = id, Name = playerName, Token = token };
+            players.TryAdd(id, joinedPlayer);
 
             if (gameAlreadyInProgress)
             {
@@ -179,10 +180,10 @@ public class GameLogic
 
     public MoveResult? Move(string playerToken, Direction direction)
     {
-        playerToken = playerToken.Replace("\"", "");
+        if (string.IsNullOrWhiteSpace(playerToken))
+            throw new ArgumentNullException(nameof(playerToken));
 
-        if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle || string.IsNullOrWhiteSpace(playerToken))
-            return null;
+        playerToken = playerToken.Replace("\"", "");
 
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
         if (player == null)
@@ -192,12 +193,17 @@ public class GameLogic
 
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
         var currentPlayer = cell?.OccupiedBy;
-        if(cell == null || currentPlayer == null)
+        if (cell == null || currentPlayer == null)
         {
-            return null;
+            throw new InvalidMoveException("Player is not currently on the board");
+        }
+        var currentLocation = cell.Location;
+
+        if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle)
+        {
+            return new MoveResult(currentLocation, false);
         }
 
-        var currentLocation = cell.Location;
         var newLocation = direction switch
         {
             Direction.Up => currentLocation with { Row = currentLocation.Row - 1 },
@@ -207,58 +213,72 @@ public class GameLogic
             _ => throw new DirectionNotRecognizedException()
         };
 
-        if(cells.ContainsKey(newLocation))
+        if (!cells.ContainsKey(newLocation))
         {
-            lock (lockObject)
-            {
-                Player? otherPlayer = cells[newLocation].OccupiedBy;
-                if (otherPlayer == null)
-                {
-                    bool ateAPill = false;
-                    var origDestinationCell = cells[newLocation];
-                    if (origDestinationCell.IsPillAvailable)
-                    {
-                        player.Score += getPointValue(newLocation);
-                        ateAPill = true;
-                    }
-                    var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
-
-                    var origSourceCell = cells[currentLocation];
-                    var newSourceCell = origSourceCell with { OccupiedBy = null };
-
-                    log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
-
-                    cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
-                    cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
-
-                    changeToBattleModeIfNoMorePillsAvailable();
-
-                    GameStateChanged?.Invoke(this, EventArgs.Empty);
-                    return new MoveResult(newLocation, ateAPill);
-                }
-                else if (CurrentGameState == GameState.Battle)
-                {
-                    //decrease the health of both players by the min health of the players
-                    var minHealth = Math.Min(currentPlayer.Score, otherPlayer.Score);
-                    log.LogInformation("Player {currentPlayer} attacking {otherPlayer}", currentPlayer, otherPlayer);
-
-                    currentPlayer.Score -= minHealth;
-                    otherPlayer.Score -= minHealth;
-                    log.LogInformation("new scores: {currentPlayerScore}, {otherPlayerScore}", currentPlayer.Score, otherPlayer.Score);
-
-                    if (removePlayerIfDead(currentPlayer) || removePlayerIfDead(otherPlayer))
-                    {
-                        specialPointValues.TryAdd(newLocation, (int)Math.Round(minHealth / 2.0, 0));
-                        checkForWinner();
-                    }
-
-                    GameStateChanged?.Invoke(this, EventArgs.Empty);
-                    return new MoveResult(currentLocation, false);
-                }
-            }
+            return new MoveResult(currentLocation, false);
         }
 
-        return null;
+        lock (lockObject)
+        {
+            Player? otherPlayer = cells[newLocation].OccupiedBy;
+            if (otherPlayer == null)
+            {
+                return movePlayer(player, currentLocation, newLocation);
+            }
+            else if (CurrentGameState == GameState.Battle)
+            {
+                return attack(currentPlayer, currentLocation, newLocation, otherPlayer);
+            }
+            else
+            {
+                return new MoveResult(currentLocation, false);
+            }
+        }
+    }
+
+    private MoveResult movePlayer(Player player, Location currentLocation, Location newLocation)
+    {
+        bool ateAPill = false;
+        var origDestinationCell = cells[newLocation];
+        if (origDestinationCell.IsPillAvailable)
+        {
+            player.Score += getPointValue(newLocation);
+            ateAPill = true;
+        }
+        var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
+
+        var origSourceCell = cells[currentLocation];
+        var newSourceCell = origSourceCell with { OccupiedBy = null };
+
+        log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
+
+        cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
+        cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
+
+        changeToBattleModeIfNoMorePillsAvailable();
+
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        return new MoveResult(newLocation, ateAPill);
+    }
+
+    private MoveResult attack(Player currentPlayer, Location currentLocation, Location newLocation, Player otherPlayer)
+    {
+        //decrease the health of both players by the min health of the players
+        var minHealth = Math.Min(currentPlayer.Score, otherPlayer.Score);
+        log.LogInformation("Player {currentPlayer} attacking {otherPlayer}", currentPlayer, otherPlayer);
+
+        currentPlayer.Score -= minHealth;
+        otherPlayer.Score -= minHealth;
+        log.LogInformation("new scores: {currentPlayerScore}, {otherPlayerScore}", currentPlayer.Score, otherPlayer.Score);
+
+        if (removePlayerIfDead(currentPlayer) || removePlayerIfDead(otherPlayer))
+        {
+            specialPointValues.TryAdd(newLocation, (int)Math.Round(minHealth / 2.0, 0));
+            checkForWinner();
+        }
+
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        return new MoveResult(currentLocation, false);
     }
 
     private int getPointValue(Location newLocation)
