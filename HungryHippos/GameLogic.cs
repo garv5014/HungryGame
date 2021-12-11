@@ -181,7 +181,7 @@ public class GameLogic
     {
         playerToken = playerToken.Replace("\"", "");
 
-        if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle)
+        if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle || string.IsNullOrWhiteSpace(playerToken))
             return null;
 
         var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
@@ -191,7 +191,7 @@ public class GameLogic
         }
 
         var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
-        var currentPlayer = cell.OccupiedBy;
+        var currentPlayer = cell?.OccupiedBy;
         if(cell == null || currentPlayer == null)
         {
             return null;
@@ -207,7 +207,7 @@ public class GameLogic
             _ => throw new DirectionNotRecognizedException()
         };
 
-        if (isInBoard(newLocation))
+        if(cells.ContainsKey(newLocation))
         {
             lock (lockObject)
             {
@@ -297,7 +297,12 @@ public class GameLogic
         return true;
     }
 
-    public IEnumerable<RedactedCell> GetBoardState() => cells.Values.Select(c=>new RedactedCell(c));
+    public IEnumerable<RedactedCell> GetBoardState()
+    {
+        if (CurrentGameState == GameState.Joining)
+            return new RedactedCell[] { };
+        return cells.Values.Select(c => new RedactedCell(c));
+    }
 
     private void changeToBattleModeIfNoMorePillsAvailable()
     {
@@ -311,6 +316,4 @@ public class GameLogic
             log.LogInformation("No more pills available, changing game state to {gameState}", CurrentGameState);
         }
     }
-
-    private bool isInBoard(Location l) => l.Row >= 0 && l.Row < MaxRows && l.Column >= 0 && l.Column < MaxCols;
 }
