@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
 
 namespace HungryHippos;
 
@@ -59,7 +58,6 @@ public class GameLogic
         MaxRows = numRows;
         MaxCols = numColumns;
 
-
         initializeGame();
     }
 
@@ -73,16 +71,14 @@ public class GameLogic
             }
 
             cells.Clear();
-            for (int r = 0; r < MaxRows; r++)
+            foreach (var location in from r in Enumerable.Range(0, MaxRows)
+                                     from c in Enumerable.Range(0, MaxCols)
+                                     select new Location(r, c))
             {
-                for (int c = 0; c < MaxCols; c++)
-                {
-                    var location = new Location(r, c);
-                    cells.TryAdd(location, new Cell(location, true, null));
-                }
+                cells.TryAdd(location, new Cell(location, true, null));
             }
 
-            foreach (var player in players.Select(i=>i.Value))
+            foreach (var player in players.Select(i => i.Value))
             {
                 var newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
                 bool addToRowIfConflict = true;
@@ -135,6 +131,7 @@ public class GameLogic
                 p.Value.Score = 0;
             }
         }
+
         GameStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -166,9 +163,9 @@ public class GameLogic
                 var newCell = origCell with { OccupiedBy = joinedPlayer, IsPillAvailable = false };
                 cells.TryUpdate(newLocation, newCell, origCell);
             }
-
-            GameStateChanged?.Invoke(this, EventArgs.Empty);
         }
+
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
         return token;
     }
 
@@ -285,7 +282,7 @@ public class GameLogic
     {
         int pointValue = 0;
 
-        if(!specialPointValues.TryRemove(newLocation, out pointValue))
+        if (!specialPointValues.TryRemove(newLocation, out pointValue))
         {
             pillValues.TryDequeue(out pointValue);
         }
