@@ -131,7 +131,7 @@ namespace foolhearty
             }
             else
             {
-                url = "https://hungrygame.herokuapp.com";// args.Length == 0 ? getString("What server would you like to use?") : args[0];
+                url = args.Length == 0 ? getString("What server would you like to use?") : args[1];
                 token = await httpClient.GetStringAsync($"{url}/join?playerName={name}");
                 File.WriteAllText(fileName, $"{url}|{token}");
             }
@@ -141,6 +141,12 @@ namespace foolhearty
         {
             var boardString = await httpClient.GetStringAsync($"{url}/board");
             return JsonSerializer.Deserialize<IEnumerable<Cell>>(boardString).ToList();
+        }
+
+        static string getString(string prompt)
+        {
+            Console.WriteLine(prompt);
+            return Console.ReadLine();
         }
     }
     record Location(int row, int column);
