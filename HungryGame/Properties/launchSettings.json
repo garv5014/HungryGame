@@ -8,7 +8,7 @@
     }
   },
   "profiles": {
-    "HungryHippos": {
+    "HungryGame": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

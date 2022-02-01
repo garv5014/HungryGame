@@ -1,9 +1,7 @@
-﻿using HungryHippos;
-using System;
+﻿using HungryGame;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HungryTests
 {
@@ -16,16 +14,16 @@ namespace HungryTests
             var maxRow = cells.Max(c => c.Location.Row);
             var maxCol = cells.Max(c => c.Location.Column);
 
-            for(int row = 0; row <= maxRow; row++)
+            for (int row = 0; row <= maxRow; row++)
             {
-                for(int col = 0; col <= maxCol; col++)
+                for (int col = 0; col <= maxCol; col++)
                 {
                     var cell = cells.Single(c => c.Location.Row == row && c.Location.Column == col);
-                    if(cell.IsPillAvailable)
+                    if (cell.IsPillAvailable)
                     {
                         board.Append('·');
                     }
-                    else if(cell.OccupiedBy != null)
+                    else if (cell.OccupiedBy != null)
                     {
                         board.Append(cell.OccupiedBy.Id);
                     }

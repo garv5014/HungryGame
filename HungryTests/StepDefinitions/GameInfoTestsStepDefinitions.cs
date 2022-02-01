@@ -1,6 +1,5 @@
 using FluentAssertions;
-using Gherkin;
-using HungryHippos;
+using HungryGame;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;

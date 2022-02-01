@@ -6,16 +6,16 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["HungryHippos/HungryHippos.csproj", "HungryHippos/"]
-RUN dotnet restore "HungryHippos/HungryHippos.csproj"
+COPY ["HungryGame/HungryGame.csproj", "HungryGame/"]
+RUN dotnet restore "HungryGame/HungryGame.csproj"
 COPY . .
-WORKDIR "/src/HungryHippos"
-RUN dotnet build "HungryHippos.csproj" -c Release -o /app/build
+WORKDIR "/src/HungryGame"
+RUN dotnet build "HungryGame.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "HungryHippos.csproj" -c Release -o /app/publish
+RUN dotnet publish "HungryGame.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "HungryHippos.dll"]
+ENTRYPOINT ["dotnet", "HungryGame.dll"]

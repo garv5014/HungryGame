@@ -1,4 +1,4 @@
-﻿namespace HungryHippos;
+﻿namespace HungryGame;
 
 public record MoveRequest(string Direction, string UserToken);
 public record Cell(Location Location, bool IsPillAvailable, Player? OccupiedBy);

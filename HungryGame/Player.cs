@@ -1,4 +1,4 @@
-﻿namespace HungryHippos;
+﻿namespace HungryGame;
 
 public class Player
 {

@@ -3,12 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HungryHippos", "HungryHippos\HungryHippos.csproj", "{D24C1A26-51A2-4654-A3FD-304F1D5DFFE1}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{85938023-1BBA-42AF-9AEC-CDC61F5CDE10}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		.github\workflows\main_hungryhippos.yml = .github\workflows\main_hungryhippos.yml
+		.github\workflows\main_hungrygame.yml = .github\workflows\main_hungrygame.yml
 		monster.ps1 = monster.ps1
 		Readme.md = Readme.md
 	EndProjectSection
@@ -17,7 +15,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HungryTests", "HungryTests\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "clients", "clients", "{17F7A69E-4458-4E28-BF3B-A8C6980B2CB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "foolhearty", "clients\foolhearty\foolhearty.csproj", "{B098D1B7-99C2-4350-9CD8-A5BBFEA87442}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "foolhearty", "clients\foolhearty\foolhearty.csproj", "{B098D1B7-99C2-4350-9CD8-A5BBFEA87442}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HungryGame", "HungryGame\HungryGame.csproj", "{683F965A-7786-4A7A-A288-CECB44528C4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,10 +25,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D24C1A26-51A2-4654-A3FD-304F1D5DFFE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D24C1A26-51A2-4654-A3FD-304F1D5DFFE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D24C1A26-51A2-4654-A3FD-304F1D5DFFE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D24C1A26-51A2-4654-A3FD-304F1D5DFFE1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{09CA89CF-3B1C-4983-AA45-96DF19E292E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{09CA89CF-3B1C-4983-AA45-96DF19E292E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09CA89CF-3B1C-4983-AA45-96DF19E292E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -37,14 +33,18 @@ Global
 		{B098D1B7-99C2-4350-9CD8-A5BBFEA87442}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B098D1B7-99C2-4350-9CD8-A5BBFEA87442}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B098D1B7-99C2-4350-9CD8-A5BBFEA87442}.Release|Any CPU.Build.0 = Release|Any CPU
+		{683F965A-7786-4A7A-A288-CECB44528C4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{683F965A-7786-4A7A-A288-CECB44528C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{683F965A-7786-4A7A-A288-CECB44528C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{683F965A-7786-4A7A-A288-CECB44528C4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {B8E988C0-9E41-4692-995F-CAF59F194D4D}
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B098D1B7-99C2-4350-9CD8-A5BBFEA87442} = {17F7A69E-4458-4E28-BF3B-A8C6980B2CB9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B8E988C0-9E41-4692-995F-CAF59F194D4D}
 	EndGlobalSection
 EndGlobal

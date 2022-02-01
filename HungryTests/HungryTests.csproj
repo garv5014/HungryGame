@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HungryHippos\HungryHippos.csproj" />
+    <ProjectReference Include="..\HungryGame\HungryGame.csproj" />
   </ItemGroup>
 
 </Project>

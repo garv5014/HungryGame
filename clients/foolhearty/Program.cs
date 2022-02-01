@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 namespace foolhearty
 {
     public class Program
@@ -17,7 +10,7 @@ namespace foolhearty
         static string url = "";
         public static async Task Main(string[] args)
         {
-            if(args.Length == 0)
+            if (args.Length == 0)
             {
                 Console.WriteLine("Must be called with player name as argument");
                 return;
@@ -105,7 +98,7 @@ namespace foolhearty
                     {
                         continue;
                     }
-                    if(cell.occupiedBy.score < minScore)
+                    if (cell.occupiedBy.score < minScore)
                     {
                         minScore = cell.occupiedBy.score;
                         closest = cell.location;
@@ -138,12 +131,12 @@ namespace foolhearty
             }
             else
             {
-                url = "https://hungry-hungry-hippos.herokuapp.com";// args.Length == 0 ? getString("What server would you like to use?") : args[0];
+                url = "https://hungrygame.herokuapp.com";// args.Length == 0 ? getString("What server would you like to use?") : args[0];
                 token = await httpClient.GetStringAsync($"{url}/join?playerName={name}");
                 File.WriteAllText(fileName, $"{url}|{token}");
             }
         }
-        
+
         static async Task<List<Cell>> getBoardAsync()
         {
             var boardString = await httpClient.GetStringAsync($"{url}/board");

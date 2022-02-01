@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace HungryHippos
+namespace HungryGame
 {
     [Serializable]
     internal class GameAlreadyStartedException : Exception
