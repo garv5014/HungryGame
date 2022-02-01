@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-
-namespace HungryHippos;
+﻿namespace HungryHippos;
 
 public enum GameState
 {
@@ -23,18 +21,20 @@ public class SystemRandomService : IRandomService
 
 public class GameLogic
 {
+    private readonly object lockForPlayersCellsPillValuesAndSpecialPontValues = new();
+    private readonly Dictionary<int, Player> players = new();
+    private readonly Dictionary<Location, Cell> cells = new();
+    private readonly Queue<int> pillValues = new();
+    private readonly Dictionary<Location, int> specialPointValues = new();
+
     private int number = 0;
-    private readonly ConcurrentDictionary<int, Player> players = new();
-    private readonly ConcurrentDictionary<Location, Cell> cells = new();
     private long gameStateValue = 0;
     private readonly IConfiguration config;
     private readonly ILogger<GameLogic> log;
     private readonly IRandomService random;
-    private readonly object lockObject = new();
+
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
-    private readonly ConcurrentQueue<int> pillValues = new();
-    private readonly ConcurrentDictionary<Location, int> specialPointValues = new();
     public event EventHandler? GameStateChanged;
 
     public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random)
@@ -63,7 +63,7 @@ public class GameLogic
 
     private void initializeGame()
     {
-        lock (lockObject)
+        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
             if (players.Count > MaxRows * MaxCols)
             {
@@ -124,7 +124,7 @@ public class GameLogic
         }
 
         Interlocked.Exchange(ref gameStateValue, 0);
-        lock (lockObject)
+        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
             foreach (var p in players)
             {
@@ -142,7 +142,7 @@ public class GameLogic
         var token = Guid.NewGuid().ToString();
         log.LogInformation("{playerName} wants to join (will be {token})", playerName, token);
 
-        lock (lockObject)
+        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
             var id = Interlocked.Increment(ref number);
             log.LogDebug("Got lock; new user will be ID# {id}", id);
@@ -161,7 +161,7 @@ public class GameLogic
                 var newLocation = availableSpaces[randomIndex].Key;
                 var origCell = cells[newLocation];
                 var newCell = origCell with { OccupiedBy = joinedPlayer, IsPillAvailable = false };
-                cells.TryUpdate(newLocation, newCell, origCell);
+                cells[newLocation] = newCell;
             }
         }
 
@@ -182,18 +182,25 @@ public class GameLogic
 
         playerToken = playerToken.Replace("\"", "");
 
-        var player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
+        Player player;
+        Cell cell;
+        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
+        {
+            player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
+            cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
+        }
+
         if (player == null)
         {
             throw new PlayerNotFoundException();
         }
 
-        var cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
         var currentPlayer = cell?.OccupiedBy;
         if (cell == null || currentPlayer == null)
         {
             throw new InvalidMoveException("Player is not currently on the board");
         }
+
         var currentLocation = cell.Location;
 
         if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle)
@@ -210,27 +217,32 @@ public class GameLogic
             _ => throw new DirectionNotRecognizedException()
         };
 
-        if (!cells.ContainsKey(newLocation))
+        MoveResult moveResult;
+        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
-            return new MoveResult(currentLocation, false);
-        }
-
-        lock (lockObject)
-        {
-            Player? otherPlayer = cells[newLocation].OccupiedBy;
-            if (otherPlayer == null)
+            if (!cells.ContainsKey(newLocation))
             {
-                return movePlayer(player, currentLocation, newLocation);
-            }
-            else if (CurrentGameState == GameState.Battle)
-            {
-                return attack(currentPlayer, currentLocation, newLocation, otherPlayer);
+                moveResult = new MoveResult(currentLocation, false);
             }
             else
             {
-                return new MoveResult(currentLocation, false);
+                Player? otherPlayer = cells[newLocation].OccupiedBy;
+                if (otherPlayer == null)
+                {
+                    moveResult = movePlayer(player, currentLocation, newLocation);
+                }
+                else if (CurrentGameState == GameState.Battle)
+                {
+                    moveResult = attack(currentPlayer, currentLocation, newLocation, otherPlayer);
+                }
+                else
+                {
+                    moveResult = new MoveResult(currentLocation, false);
+                }
             }
         }
+        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        return moveResult;
     }
 
     private MoveResult movePlayer(Player player, Location currentLocation, Location newLocation)
@@ -249,12 +261,11 @@ public class GameLogic
 
         log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
 
-        cells.TryUpdate(newLocation, newDestinationCell, origDestinationCell);
-        cells.TryUpdate(currentLocation, newSourceCell, origSourceCell);
+        cells[newLocation] = newDestinationCell;
+        cells[currentLocation] = newSourceCell;
 
         changeToBattleModeIfNoMorePillsAvailable();
 
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
         return new MoveResult(newLocation, ateAPill);
     }
 
@@ -274,7 +285,6 @@ public class GameLogic
             checkForWinner();
         }
 
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
         return new MoveResult(currentLocation, false);
     }
 
@@ -282,9 +292,14 @@ public class GameLogic
     {
         int pointValue = 0;
 
-        if (!specialPointValues.TryRemove(newLocation, out pointValue))
+        if (specialPointValues.ContainsKey(newLocation))
         {
-            pillValues.TryDequeue(out pointValue);
+            pointValue = specialPointValues[newLocation];
+            specialPointValues.Remove(newLocation);
+        }
+        else
+        {
+            pointValue = pillValues.Dequeue();
         }
 
         return pointValue;
@@ -310,7 +325,7 @@ public class GameLogic
         log.LogInformation("Removing player from board: {player}", player);
         var origCell = cells.FirstOrDefault(c => c.Value.OccupiedBy == player);
         var updatedCell = origCell.Value with { OccupiedBy = null, IsPillAvailable = true };
-        cells.TryUpdate(origCell.Key, updatedCell, origCell.Value);
+        cells[origCell.Key] = updatedCell;
         return true;
     }
 
@@ -318,7 +333,11 @@ public class GameLogic
     {
         if (CurrentGameState == GameState.Joining)
             return new RedactedCell[] { };
-        return cells.Values.Select(c => new RedactedCell(c));
+
+        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
+        {
+            return cells.Values.Select(c => new RedactedCell(c));
+        }
     }
 
     private void changeToBattleModeIfNoMorePillsAvailable()
