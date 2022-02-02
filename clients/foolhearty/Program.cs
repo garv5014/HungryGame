@@ -10,12 +10,6 @@ namespace foolhearty
         static string url = "";
         public static async Task Main(string[] args)
         {
-            if (args.Length == 0)
-            {
-                Console.WriteLine("Must be called with player name as argument");
-                return;
-            }
-
             httpClient = new HttpClient();
             random = new Random();
             await joinGame(args);
@@ -29,11 +23,21 @@ namespace foolhearty
                 {
                     var destination = getClosest(currentLocation, board);
                     var direction = determineDirection(currentLocation, destination);
+                MOVE:
                     var moveResultString = await httpClient.GetStringAsync($"{url}/move/{direction}?token={token}");
                     var moveResultJson = JsonDocument.Parse(moveResultString).RootElement;
                     var currentRow = moveResultJson.GetProperty("newLocation").GetProperty("row").GetInt32();
                     var currentCol = moveResultJson.GetProperty("newLocation").GetProperty("column").GetInt32();
-                    currentLocation = new Location(currentRow, currentCol);
+                    var newLocation = new Location(currentRow, currentCol);
+                    if (newLocation == currentLocation)//we didn't move
+                    {
+                        direction = tryNextDirection(direction);
+                        goto MOVE;
+                    }
+                    else
+                    {
+                        currentLocation = new Location(currentRow, currentCol);
+                    }
 
                     if ((await httpClient.GetStringAsync($"{url}/state")) == "GameOver")
                     {
@@ -49,6 +53,19 @@ namespace foolhearty
                 }
             }
         }
+
+        private static string tryNextDirection(string direction) => direction switch
+        {
+            "down" => "left",
+            "left" => "up",
+            "up" => "right",
+            "right" => "down"
+            //"down" => current with { column = current.column - 1 },
+            //"left" => current with { row = current.row - 1 },
+            //"up" => current with { column = current.column + 1 },
+            //"right" => current with { row = current.row + 1 },
+            //_ => current
+        };
 
         private static string determineDirection(Location currentLocation, Location destination)
         {
