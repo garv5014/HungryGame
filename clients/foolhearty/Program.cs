@@ -121,7 +121,7 @@ namespace foolhearty
 
         static async Task joinGame(string[] args)
         {
-            var name = args[0];
+            var name = $"Client {DateTime.Now:HH.mm.ffff}";
             string fileName = $"connectionInfo_{name}.txt";
             if (File.Exists(fileName))
             {
@@ -131,7 +131,7 @@ namespace foolhearty
             }
             else
             {
-                url = "https://hungrygame.herokuapp.com";// args.Length == 0 ? getString("What server would you like to use?") : args[0];
+                url = "https://hungrygame.azurewebsites.net";// args.Length == 0 ? getString("What server would you like to use?") : args[0];
                 token = await httpClient.GetStringAsync($"{url}/join?playerName={name}");
                 File.WriteAllText(fileName, $"{url}|{token}");
             }
