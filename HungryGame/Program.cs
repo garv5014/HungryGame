@@ -60,19 +60,30 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{builder.E
 app.MapFallbackToPage("/_Host");
 
 //API endpoints
-app.MapGet("/join", (string? userName, string? playerName, GameLogic gameInfo) =>
+app.MapGet("/join", (string? userName, string? playerName, GameLogic gameLogic) =>
 {
     var name = userName ?? playerName ?? throw new ArgumentNullException(nameof(userName), "Must define either a userName or playerName in the query string.");
-    return gameInfo.JoinPlayer(name);
+    return gameLogic.JoinPlayer(name);
 });
-app.MapGet("/move/left", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Left));
-app.MapGet("/move/right", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Right));
-app.MapGet("/move/up", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Up));
-app.MapGet("/move/down", (string token, GameLogic gameInfo) => gameInfo.Move(token, Direction.Down));
-app.MapGet("/players", ([FromServices] GameLogic gameInfo) => gameInfo.GetPlayersByScoreDescending().Select(p => new { p.Name, p.Id, p.Score }));
-app.MapGet("/start", (string password, int rows, int cols, GameLogic gameInfo) => gameInfo.StartGame(rows, cols, password));
-app.MapGet("/reset", (string password, GameLogic gameInfo) => gameInfo.ResetGame(password));
-app.MapGet("/board", ([FromServices] GameLogic gameInfo) => gameInfo.GetBoardState());
-app.MapGet("/state", ([FromServices] GameLogic gameInfo) => gameInfo.CurrentGameState.ToString());
+app.MapGet("/move/left", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Left));
+app.MapGet("/move/right", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Right));
+app.MapGet("/move/up", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Up));
+app.MapGet("/move/down", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Down));
+app.MapGet("/players", ([FromServices] GameLogic gameLogic) => gameLogic.GetPlayersByScoreDescending().Select(p => new { p.Name, p.Id, p.Score }));
+app.MapGet("/start", (int numRows, int numCols, string password, int? timeLimit, GameLogic gameLogic) =>
+{
+    var gameStart = new NewGameInfo
+    {
+        NumColumns = numCols,
+        NumRows = numRows,
+        SecretCode = password,
+        IsTimed = timeLimit.HasValue,
+        TimeLimitInMinutes = timeLimit,
+    };
+    gameLogic.StartGame(gameStart);
+});
+app.MapGet("/reset", (string password, GameLogic gameLogic) => gameLogic.ResetGame(password));
+app.MapGet("/board", ([FromServices] GameLogic gameLogic) => gameLogic.GetBoardState());
+app.MapGet("/state", ([FromServices] GameLogic gameLogic) => gameLogic.CurrentGameState.ToString());
 
 app.Run();

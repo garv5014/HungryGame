@@ -47,16 +47,46 @@ public class GameLogic
     public bool IsGameStarted => Interlocked.Read(ref gameStateValue) != 0;
     public GameState CurrentGameState => (GameState)Interlocked.Read(ref gameStateValue);
     public bool IsGameOver => Interlocked.Read(ref gameStateValue) == 3;
+    public DateTime? GameEndsOn { get; private set; }
+    public TimeSpan? TimeLimit { get; private set; }
+    public TimeSpan? TimeRemaining => GameEndsOn.HasValue ? GameEndsOn.Value - DateTime.Now : null;
+    private Timer gameTimer;
 
-    public void StartGame(int numRows, int numColumns, string secretCode)
+    public void StartGame(NewGameInfo gameInfo)
     {
-        if (secretCode != config["SECRET_CODE"] || Interlocked.Read(ref gameStateValue) != 0)
+        if (gameInfo.SecretCode != config["SECRET_CODE"] || Interlocked.Read(ref gameStateValue) != 0)
         {
             return;
         }
 
-        MaxRows = numRows;
-        MaxCols = numColumns;
+        MaxRows = gameInfo.NumRows;
+        MaxCols = gameInfo.NumColumns;
+
+        if (gameInfo.IsTimed && gameInfo.TimeLimitInMinutes.HasValue)
+        {
+            var minutes = gameInfo.TimeLimitInMinutes.Value;
+            TimeLimit = TimeSpan.FromMinutes(minutes);
+            GameEndsOn = DateTime.Now.Add(TimeLimit.Value);
+            gameTimer = new Timer(gameOverCallback, null, TimeLimit.Value, Timeout.InfiniteTimeSpan);
+        }
+
+        initializeGame();
+    }
+
+    private void gameOverCallback(object? state)
+    {
+        log.LogInformation($"Timer ran out.  Game over.");
+        Interlocked.Exchange(ref gameStateValue, 3);
+
+        Thread.Sleep(TimeSpan.FromSeconds(5));
+
+        resetGame();
+        if (TimeLimit.HasValue)
+        {
+            GameEndsOn = DateTime.Now.Add(TimeLimit.Value);
+            gameTimer = new Timer(gameOverCallback, null, TimeLimit.Value, Timeout.InfiniteTimeSpan);
+        }
+
 
         initializeGame();
     }
@@ -123,7 +153,13 @@ public class GameLogic
             return;
         }
 
+        resetGame();
+    }
+
+    private void resetGame()
+    {
         Interlocked.Exchange(ref gameStateValue, 0);
+
         lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
             foreach (var p in players)

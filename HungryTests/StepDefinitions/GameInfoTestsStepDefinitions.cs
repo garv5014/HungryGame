@@ -75,7 +75,13 @@ namespace HungryTests.StepDefinitions
             var game = getGame();
             try
             {
-                game.StartGame(rows, cols, SECRET_CODE);
+                var newGameInfo = new NewGameInfo
+                {
+                    NumRows = rows,
+                    NumColumns = cols,
+                    SecretCode = SECRET_CODE
+                };
+                game.StartGame(newGameInfo);
                 Assert.Fail("Should never make it here");
             }
             catch (Exception e)
@@ -88,7 +94,13 @@ namespace HungryTests.StepDefinitions
         public void GivenTheGameStarts(int numRows, int numColumns)
         {
             var game = getGame();
-            game.StartGame(numRows, numColumns, SECRET_CODE);
+            var newGameInfo = new NewGameInfo
+            {
+                NumRows = numRows,
+                NumColumns = numColumns,
+                SecretCode = SECRET_CODE
+            };
+            game.StartGame(newGameInfo);
         }
 
         [When(@"(.*) moves (.*) and (.*)")]

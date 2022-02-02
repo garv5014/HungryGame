@@ -1,41 +1,69 @@
 ﻿@inject GameLogic gameInfo
-<EditForm Model="@NewGame" OnValidSubmit="@HandleValidSubmit">
-    <label>
-        Rows
-        <InputNumber DisplayName="Rows" @bind-Value="NewGame.NumRows" style="width: 75px" class="form-control" />
-    </label>
-    <label>
-        Columns
-        <InputNumber DisplayName="Columns" @bind-Value="NewGame.NumColumns" style="width: 75px" class="form-control" />
-    </label>
-    <label>
-        Cell Icon
-        <InputText DisplayName="Cell Icon" @bind-Value="NewGame.CellIcon" size="2" maxlength="2" class="form-control" />
-    </label>
-    <label>
-        Password
-        <InputText type="password" DisplayName="Password" @bind-Value="NewGame.SecretCode" size="8" class="form-control" />
-    </label>
-    <button class="btn btn-primary" type="submit">Start Game</button>
+@inject IConfiguration config
+
+<EditForm Model="@NewGame" OnValidSubmit="@HandleValidSubmit" class="border p-3">
+    <div class="form-group">
+        <label>
+            Rows
+            <InputNumber DisplayName="Rows" @bind-Value="NewGame.NumRows" style="width: 75px" class="form-control" />
+        </label>
+        <label>
+            Columns
+            <InputNumber DisplayName="Columns" @bind-Value="NewGame.NumColumns" style="width: 75px" class="form-control" />
+        </label>
+        <label>
+            Cell Icon
+            <InputText DisplayName="Cell Icon" @bind-Value="NewGame.CellIcon" size="2" maxlength="2" class="form-control" />
+        </label>
+        <label>
+            Password
+            <InputText type="password" DisplayName="Password" @bind-Value="NewGame.SecretCode" size="8" class="form-control" />
+        </label>
+    </div>
+    <div class="form-group mt-2 mb-2 row ms-0">
+        <div class="form-check col-auto">
+            <InputCheckbox id="isTimed" DisplayName="Is Timed" @bind-Value="NewGame.IsTimed" class="form-check-input" />
+            <label class="form-label" for="isTimed">Is Timed</label>
+        </div>
+        @if (NewGame.IsTimed)
+        {
+            <label class="col-auto">
+                Time Limit (in minutes)
+                <input type="number" class="form-control" min=1 max=10 size="3" @bind="NewGame.TimeLimitInMinutes" />
+            </label>
+        }
+    </div>
+    <div class="form-group">
+        <button class="btn btn-primary" type="submit">Start Game</button>
+
+        @if (startGameError != null)
+        {
+            <div class="mt-2 alert alert-warning alert-dismissible fade show" role="alert">
+                <strong>Invalid Password!</strong><br/>
+                <img src="https://static.tumblr.com/ixshp06/YP6m2221z/dennis_nedry_magic_word_header.gif" />
+            </div>
+        }
+    </div>
 </EditForm>
 
 @code
 {
-    private class NewGameInfo
-    {
-        public int NumRows { get; set; } = 15;
-        public int NumColumns { get; set; } = 15;
-        public string SecretCode { get; set; } = string.Empty;
-        public string CellIcon { get; set; } = "🌯";
-    }
     private NewGameInfo NewGame = new();
+    private string startGameError;
 
     [CascadingParameter]
-    public SharedStateClass SharedState{  get;  set; }
+    public SharedStateClass SharedState { get; set; }
 
     private async Task HandleValidSubmit()
     {
+        if (NewGame.SecretCode != config["SECRET_CODE"])
+        {
+            startGameError = "Invalid password.  Unable to start game.";
+            return;
+        }
+        startGameError = null;
         SharedState.CellIcon = NewGame.CellIcon;
-        gameInfo.StartGame(NewGame.NumRows, NewGame.NumColumns, NewGame.SecretCode);
+        gameInfo.StartGame(NewGame);
+        SharedState.GameEndsOn = NewGame.TimeLimitInMinutes.HasValue ? DateTime.Now.AddMinutes(NewGame.TimeLimitInMinutes.Value) : null;
     }
 }
