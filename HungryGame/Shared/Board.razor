@@ -4,7 +4,7 @@
 <h3>Game State: @gameInfo.CurrentGameState</h3>
 @if(SharedState.GameEndsOn.HasValue && gameInfo.CurrentGameState != GameState.GameOver)
 {
-    <h5>Game resets at @gameInfo.GameEndsOn.Value.ToShortTimeString() (@timeRemaining remain)</h5>
+    <h5>Game resets at @gameInfo.GameEndsOn.Value.ToString("h:mm tt") (@timeRemaining remain)</h5>
 }
 
 <table>
