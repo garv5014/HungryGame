@@ -22,10 +22,11 @@ public class SystemRandomService : IRandomService
 public class GameLogic
 {
     private readonly object lockForPlayersCellsPillValuesAndSpecialPontValues = new();
-    private readonly Dictionary<int, Player> players = new();
+    private readonly List<Player> players = new();
     private readonly Dictionary<Location, Cell> cells = new();
     private readonly Queue<int> pillValues = new();
     private readonly Dictionary<Location, int> specialPointValues = new();
+    private readonly List<Player> playersThatMovedThisGame = new();
 
     private int number = 0;
     private long gameStateValue = 0;
@@ -100,6 +101,13 @@ public class GameLogic
                 throw new TooManyPlayersToStartGameException("too many players");
             }
 
+            var playersThatNeverMoved = players.Except(playersThatMovedThisGame);
+            if (playersThatNeverMoved.Any())
+            {
+                players.RemoveAll(p => playersThatNeverMoved.Contains(p));
+            }
+            playersThatMovedThisGame.Clear();
+
             cells.Clear();
             foreach (var location in from r in Enumerable.Range(0, MaxRows)
                                      from c in Enumerable.Range(0, MaxCols)
@@ -108,7 +116,7 @@ public class GameLogic
                 cells.TryAdd(location, new Cell(location, true, null));
             }
 
-            foreach (var player in players.Select(i => i.Value))
+            foreach (var player in players)
             {
                 var newLocation = new Location(random.Next(MaxRows), random.Next(MaxCols));
                 bool addToRowIfConflict = true;
@@ -164,7 +172,7 @@ public class GameLogic
         {
             foreach (var p in players)
             {
-                p.Value.Score = 0;
+                p.Score = 0;
             }
         }
 
@@ -184,7 +192,9 @@ public class GameLogic
             log.LogDebug("Got lock; new user will be ID# {id}", id);
 
             var joinedPlayer = new Player { Id = id, Name = playerName, Token = token };
-            players.TryAdd(id, joinedPlayer);
+            players.Add(joinedPlayer);
+
+            markPlayerAsActive(joinedPlayer);
 
             if (gameAlreadyInProgress)
             {
@@ -208,8 +218,7 @@ public class GameLogic
     private bool gameAlreadyInProgress => Interlocked.Read(ref gameStateValue) != 0;
 
     public IEnumerable<Player> GetPlayersByScoreDescending() =>
-        players.Select(p => p.Value)
-            .OrderByDescending(s => s.Score);
+        players.OrderByDescending(p => p.Score);
 
     public MoveResult? Move(string playerToken, Direction direction)
     {
@@ -222,7 +231,7 @@ public class GameLogic
         Cell cell;
         lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
-            player = players.FirstOrDefault(kvp => kvp.Value.Token == playerToken).Value;
+            player = players.FirstOrDefault(p => p.Token == playerToken);
             cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
         }
 
@@ -230,6 +239,8 @@ public class GameLogic
         {
             throw new PlayerNotFoundException();
         }
+
+        markPlayerAsActive(player);
 
         var currentPlayer = cell?.OccupiedBy;
         if (cell == null || currentPlayer == null)
@@ -279,6 +290,12 @@ public class GameLogic
         }
         GameStateChanged?.Invoke(this, EventArgs.Empty);
         return moveResult;
+    }
+
+    private void markPlayerAsActive(Player player)
+    {
+        if (!playersThatMovedThisGame.Contains(player))
+            playersThatMovedThisGame.Add(player);
     }
 
     private MoveResult movePlayer(Player player, Location currentLocation, Location newLocation)
