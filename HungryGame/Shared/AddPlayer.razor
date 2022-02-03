@@ -3,43 +3,47 @@
 @using System.ComponentModel.DataAnnotations;
 @using Microsoft.AspNetCore.Mvc
 
-<div class="w-50" @onkeydown=keyPress tabindex="0" @ref="myDiv">
-    @if (joined)
-    {
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-1">
-                <button @onclick="moveUp">⬆</button>
+<div class="vh-90 w-100" @onkeydown=keyPress tabindex="0" @ref="myDiv">
+    <div class="border-1">
+        @if (joined)
+        {
+            <div class="row">
+                <p>Click on the arrow buttons to move.  Or, use the arrow keys on your keyboard.</p>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-1">
-                <button @onclick="moveLeft">⬅</button>
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-1">
+                    <button @onclick="moveUp">⬆</button>
+                </div>
             </div>
-            <div class="col-1"></div>
-            <div class="col-1">
-                <button @onclick="moveRight">➡</button>
+            <div class="row">
+                <div class="col-1">
+                    <button @onclick="moveLeft">⬅</button>
+                </div>
+                <div class="col-1"></div>
+                <div class="col-1">
+                    <button @onclick="moveRight">➡</button>
+                </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-1">
-                <button @onclick="moveDown">⬇</button>
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-1">
+                    <button @onclick="moveDown">⬇</button>
+                </div>
             </div>
-        </div>
-
-    }
-    else if (gameAlreadyStarted)
-    {
-        <div class="error">Too late.  Game already started.</div>
-    }
-    else
-    {
-        <EditForm Model="@joinPlayerInfo" OnValidSubmit="@HandleValidSubmit">
-            <InputText DisplayName="Player Name" @bind-Value="joinPlayerInfo.PlayerName" />
-            <button type="submit">Join Player</button>
-        </EditForm>
-    }
+        }
+        else if (gameAlreadyStarted)
+        {
+            <div class="error">Too late.  Game already started.</div>
+        }
+        else
+        {
+            <EditForm Model="@joinPlayerInfo" OnValidSubmit="@HandleValidSubmit">
+                <InputText DisplayName="Player Name" @bind-Value="joinPlayerInfo.PlayerName" />
+                <button type="submit">Join Player</button>
+            </EditForm>
+        }
+    </div>
 </div>
 
 
