@@ -3,15 +3,13 @@ namespace foolhearty
 {
     public class Program
     {
-        private static HttpClient httpClient;
-        private static Random random;
+        private static HttpClient httpClient = new();
         private static string token;
-        private static List<Cell> board;
+        private static int errorCount = 0;
+        private static int sleepTime = 2_000;
         static string url = "";
         public static async Task Main(string[] args)
         {
-            httpClient = new HttpClient();
-            random = new Random();
             await joinGame(args);
             await waitForGameToStart();
             Console.WriteLine("Game started - making moves.");
@@ -48,8 +46,13 @@ namespace foolhearty
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Oops! {ex}");
-                    Thread.Sleep(5_000);
-                    break;
+                    Thread.Sleep(sleepTime);
+                    errorCount++;
+                    sleepTime += 500;
+                    if (errorCount > 200)
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -60,11 +63,6 @@ namespace foolhearty
             "left" => "up",
             "up" => "right",
             "right" => "down"
-            //"down" => current with { column = current.column - 1 },
-            //"left" => current with { row = current.row - 1 },
-            //"up" => current with { column = current.column + 1 },
-            //"right" => current with { row = current.row + 1 },
-            //_ => current
         };
 
         private static string determineDirection(Location currentLocation, Location destination)
