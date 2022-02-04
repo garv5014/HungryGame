@@ -2,7 +2,7 @@
 @implements IDisposable
 
 <h3>Game State: @gameInfo.CurrentGameState</h3>
-@if (SharedState.GameEndsOn.HasValue)
+@if (@gameInfo.GameEndsOn.HasValue)
 {
     <h5>Game resets at @gameInfo.GameEndsOn.Value.ToString("h:mm tt") (@timeRemaining remain)</h5>
 }
