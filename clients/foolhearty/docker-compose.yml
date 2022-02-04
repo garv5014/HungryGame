@@ -12,4 +12,5 @@ services:
   smartypants:
     image: ${DOCKER_REGISTRY-}foolhearty
     environment:
-      STYLE: smartypants
+      PLAY_STYLE: SmartyPants
+      NAME: smartypants

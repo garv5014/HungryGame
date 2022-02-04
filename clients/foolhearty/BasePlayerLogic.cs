@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace foolhearty;
 
@@ -6,6 +7,21 @@ public abstract class BasePlayerLogic : IPlayerLogic
 {
     protected HttpClient httpClient = new HttpClient();
     protected string url = "";
+    protected string? token;
+    protected readonly IConfiguration config;
+
+    protected BasePlayerLogic(IConfiguration config)
+    {
+        this.config = config;
+    }
+
+    public abstract string PlayerName { get; }
+
+    public virtual async Task JoinGameAsync()
+    {
+        url = config["SERVER"] ?? "https://hungrygame.azurewebsites.net";
+        token = await httpClient.GetStringAsync($"{url}/join?playerName={PlayerName}");
+    }
 
     public abstract Task PlayAsync(CancellationTokenSource cancellationTokenSource);
 
@@ -50,7 +66,6 @@ public abstract class BasePlayerLogic : IPlayerLogic
         }
     }
 
-    protected abstract Task JoinGameAsync();
     protected async Task<List<Cell>> getBoardAsync()
     {
         var boardString = await httpClient.GetStringAsync($"{url}/board");

@@ -4,28 +4,37 @@ using System.Text.Json;
 
 namespace foolhearty;
 
-public interface IPlayerLogic
-{
-    Task PlayAsync(CancellationTokenSource cancellationTokenSource);
-}
-
 public class Foolhearty : BasePlayerLogic
 {
     private readonly ILogger<Foolhearty> logger;
-    private readonly IConfiguration config;
-    private string? token;
     private int errorCount = 0;
     private int sleepTime = 2_000;
 
-    public Foolhearty(ILogger<Foolhearty> logger, IConfiguration config)
+    public Foolhearty(ILogger<Foolhearty> logger, IConfiguration config) : base(config)
     {
         this.logger = logger;
-        this.config = config;
+    }
+
+    public override string PlayerName => config["NAME"] ?? $"Client {DateTime.Now:HH.mm.ffff}";
+
+    public override async Task JoinGameAsync()
+    {
+        string fileName = $"connectionInfo_{PlayerName}.txt";
+        if (File.Exists(fileName))
+        {
+            var parts = File.ReadAllText(fileName).Split('|');
+            url = parts[0];
+            token = parts[1];
+        }
+        else
+        {
+            await base.JoinGameAsync();
+            File.WriteAllText(fileName, $"{url}|{token}");
+        }
     }
 
     public override async Task PlayAsync(CancellationTokenSource cancellationTokenSource)
     {
-        await JoinGameAsync();
         await waitForGameToStart(cancellationTokenSource.Token);
         Console.WriteLine("Game started - making moves.");
         Location currentLocation = new Location(0, 0);
@@ -96,6 +105,7 @@ public class Foolhearty : BasePlayerLogic
         var max = new Location(int.MaxValue, int.MaxValue);
         var closest = max;
         var minDistance = double.MaxValue;
+
         foreach (var cell in board)
         {
             if (cell.isPillAvailable == false)
@@ -130,23 +140,5 @@ public class Foolhearty : BasePlayerLogic
         }
 
         return closest;
-    }
-
-    protected override async Task JoinGameAsync()
-    {
-        var name = config["NAME"] ?? $"Client {DateTime.Now:HH.mm.ffff}";
-        string fileName = $"connectionInfo_{name}.txt";
-        if (File.Exists(fileName))
-        {
-            var parts = File.ReadAllText(fileName).Split('|');
-            url = parts[0];
-            token = parts[1];
-        }
-        else
-        {
-            url = config["SERVER"] ?? "https://hungrygame.azurewebsites.net";
-            token = await httpClient.GetStringAsync($"{url}/join?playerName={name}");
-            File.WriteAllText(fileName, $"{url}|{token}");
-        }
     }
 }

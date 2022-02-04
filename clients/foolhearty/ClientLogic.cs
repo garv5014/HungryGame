@@ -38,8 +38,10 @@ namespace foolhearty
                     try
                     {
                         var playerName = "foolhearty." + (config["PLAY_STYLE"] ?? "Foolhearty");
-                        Type playerType = Assembly.GetExecutingAssembly().GetType(playerName);
+                        Type playerType = Assembly.GetExecutingAssembly().GetType(playerName) ?? throw new PlayerNotFoundException(playerName);
                         var playerLogic = serviceProvider.GetService(playerType) as IPlayerLogic;
+
+                        await playerLogic.JoinGameAsync();
                         await playerLogic.PlayAsync(_cancellationTokenSource);
 
                         _exitCode = 0;

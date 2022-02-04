@@ -13,5 +13,6 @@ await Host.CreateDefaultBuilder(args)
     {
         services.AddHostedService<ClientLogic>();
         services.AddTransient<Foolhearty>();
+        services.AddTransient<SmartyPants>();
     })
     .RunConsoleAsync();
