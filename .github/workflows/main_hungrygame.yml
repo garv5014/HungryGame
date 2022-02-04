@@ -23,7 +23,10 @@ jobs:
           include-prerelease: true
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build ./HungryGame.sln --configuration Release
+
+      - name: Run Tests
+        run: dotnet test ./HungryGame.sln
 
       - name: dotnet publish
         run: dotnet publish HungryGame -c Release -o ${{env.DOTNET_ROOT}}/myapp
