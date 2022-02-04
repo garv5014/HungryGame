@@ -8,3 +8,8 @@ services:
       dockerfile: clients/foolhearty/Dockerfile
     #environment:
       # SERVER: http://localhost:5291
+
+  smartypants:
+    image: ${DOCKER_REGISTRY-}foolhearty
+    environment:
+      STYLE: smartypants

@@ -12,5 +12,6 @@ await Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddHostedService<ClientLogic>();
+        services.AddTransient<Foolhearty>();
     })
     .RunConsoleAsync();
