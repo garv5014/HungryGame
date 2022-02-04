@@ -6,5 +6,5 @@ services:
     build:
       context: ../..
       dockerfile: clients/foolhearty/Dockerfile
-    environment:
-      SERVER: http://localhost:5291
+    #environment:
+      # SERVER: http://localhost:5291
