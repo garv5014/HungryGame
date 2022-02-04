@@ -9,24 +9,88 @@ namespace foolhearty
         private readonly HttpClient httpClient = new();
         private readonly IConfiguration config;
         private readonly ILogger<ClientLogic> logger;
+        private readonly IHostApplicationLifetime appLifetime;
         private string? token;
         private int errorCount = 0;
         private int sleepTime = 2_000;
         private string url = "";
+        private CancellationTokenSource? _cancellationTokenSource;
 
-        public ClientLogic(IConfiguration config, ILogger<ClientLogic> logger)
+        private Task? _applicationTask;
+        private int? _exitCode;
+
+        public ClientLogic(IConfiguration config, ILogger<ClientLogic> logger, IHostApplicationLifetime appLifetime)
         {
             this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.appLifetime = appLifetime ?? throw new ArgumentNullException(nameof(appLifetime));
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            logger.LogDebug($"Starting with arguments: {string.Join(" ", Environment.GetCommandLineArgs())}");
+
+
+            appLifetime.ApplicationStarted.Register(() =>
+            {
+                logger.LogDebug("Application has started");
+                _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                _applicationTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await playGameAsync();
+
+                        _exitCode = 0;
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // This means the application is shutting down, so just swallow this exception
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Unhandled exception!");
+                        _exitCode = 1;
+                    }
+                    finally
+                    {
+                        // Stop the application once the work is done
+                        appLifetime.StopApplication();
+                    }
+                });
+            });
+
+            appLifetime.ApplicationStopping.Register(() =>
+            {
+                logger.LogDebug("Application is stopping");
+                _cancellationTokenSource?.Cancel();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            // Wait for the application logic to fully complete any cleanup tasks.
+            // Note that this relies on the cancellation token to be properly used in the application.
+            if (_applicationTask != null)
+            {
+                await _applicationTask;
+            }
+
+            logger.LogDebug($"Exiting with return code: {_exitCode}");
+
+            // Exit code may be null if the user cancelled via Ctrl+C/SIGTERM
+            Environment.ExitCode = _exitCode.GetValueOrDefault(-1);
+        }
+
+        public async Task playGameAsync()
         {
             await joinGame();
             await waitForGameToStart();
             Console.WriteLine("Game started - making moves.");
             Location currentLocation = new Location(0, 0);
-            while (!cancellationToken.IsCancellationRequested)
+            while (!_cancellationTokenSource.IsCancellationRequested)
             {
                 var board = await getBoardAsync();
                 logger.LogInformation("Got board state; {cellsWithPills} cells with pills remain", board.Count(c => c.isPillAvailable));
@@ -45,7 +109,7 @@ namespace foolhearty
                         var newDirection = tryNextDirection(direction);
                         logger.LogInformation("Moving {lastDirection} didn't work, trying {newDirection} instead", direction, newDirection);
                         direction = newDirection;
-                        if (cancellationToken.IsCancellationRequested || await checkIfGameOver())
+                        if (_cancellationTokenSource.IsCancellationRequested || await checkIfGameOver())
                         {
                             break;
                         }
@@ -62,7 +126,7 @@ namespace foolhearty
                         Console.WriteLine("Game over.  Waiting for next game.");
                         while (true)
                         {
-                            await Task.Delay(sleepTime, cancellationToken);
+                            await Task.Delay(sleepTime, _cancellationTokenSource.Token);
                             errorCount++;
                             sleepTime += 500;
                             if (errorCount > 200)
@@ -76,7 +140,7 @@ namespace foolhearty
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Uh oh...");
-                    await Task.Delay(sleepTime, cancellationToken);
+                    await Task.Delay(sleepTime, _cancellationTokenSource.Token);
                     errorCount++;
                     sleepTime += 500;
                     if (errorCount > 200)
@@ -191,11 +255,6 @@ namespace foolhearty
         {
             var boardString = await httpClient.GetStringAsync($"{url}/board");
             return JsonSerializer.Deserialize<IEnumerable<Cell>>(boardString).ToList();
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
     record Location(int row, int column);
