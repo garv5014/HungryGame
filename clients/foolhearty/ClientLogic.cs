@@ -1,20 +1,23 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 namespace foolhearty
 {
     public class ClientLogic : IHostedService
     {
-        private HttpClient httpClient = new();
-        private string token;
+        private readonly HttpClient httpClient = new();
+        private readonly IConfiguration config;
+        private readonly ILogger<ClientLogic> logger;
+        private string? token;
         private int errorCount = 0;
         private int sleepTime = 2_000;
         private string url = "";
-        private readonly IConfiguration config;
 
-        public ClientLogic(IConfiguration config)
+        public ClientLogic(IConfiguration config, ILogger<ClientLogic> logger)
         {
-            this.config = config;
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -26,6 +29,7 @@ namespace foolhearty
             while (!cancellationToken.IsCancellationRequested)
             {
                 var board = await getBoardAsync();
+                logger.LogInformation("Got board state; {cellsWithPills} cells with pills remain", board.Count(c => c.isPillAvailable));
                 try
                 {
                     var destination = getClosest(currentLocation, board);
@@ -38,7 +42,14 @@ namespace foolhearty
                     var newLocation = new Location(currentRow, currentCol);
                     if (newLocation == currentLocation)//we didn't move
                     {
-                        direction = tryNextDirection(direction);
+                        var newDirection = tryNextDirection(direction);
+                        logger.LogInformation("Moving {lastDirection} didn't work, trying {newDirection} instead", direction, newDirection);
+                        direction = newDirection;
+                        if (cancellationToken.IsCancellationRequested || await checkIfGameOver())
+                        {
+                            break;
+                        }
+
                         goto MOVE;
                     }
                     else
@@ -46,16 +57,26 @@ namespace foolhearty
                         currentLocation = new Location(currentRow, currentCol);
                     }
 
-                    if ((await httpClient.GetStringAsync($"{url}/state")) == "GameOver")
+                    if (await checkIfGameOver())
                     {
-                        Console.WriteLine("Game over.");
-                        break;
+                        Console.WriteLine("Game over.  Waiting for next game.");
+                        while (true)
+                        {
+                            await Task.Delay(sleepTime, cancellationToken);
+                            errorCount++;
+                            sleepTime += 500;
+                            if (errorCount > 200)
+                            {
+                                errorCount = 0;
+                                return;
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Oops! {ex}");
-                    Thread.Sleep(sleepTime);
+                    logger.LogError(ex, "Uh oh...");
+                    await Task.Delay(sleepTime, cancellationToken);
                     errorCount++;
                     sleepTime += 500;
                     if (errorCount > 200)
@@ -64,6 +85,11 @@ namespace foolhearty
                     }
                 }
             }
+        }
+
+        private async Task<bool> checkIfGameOver()
+        {
+            return (await httpClient.GetStringAsync($"{url}/state")) == "GameOver";
         }
 
         private static string tryNextDirection(string direction) => direction switch

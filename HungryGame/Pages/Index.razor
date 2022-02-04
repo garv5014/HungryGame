@@ -2,9 +2,10 @@
 @inject GameLogic gameInfo
 
 <PageTitle>Hungry Game</PageTitle>
+
 <div class="row">
     <div class="col">
-        <h1>Hungry Game</h1>
+        <h1><u>Hungry Game</u></h1>
     </div>
 
     <div class="col-auto">
@@ -18,6 +19,7 @@
 
 <div class="row">
     <CascadingValue Value=SharedState>
+        <CurrentGameState />
         @if (gameInfo.IsGameStarted)
         {
             if (gameInfo.IsGameOver)
@@ -26,6 +28,7 @@
                     <h3 class="text-center">Game Over</h3>
                 </div>
                 <div class="col-auto">
+                    <ResetGame />
                     <PlayerList />
                 </div>
             }

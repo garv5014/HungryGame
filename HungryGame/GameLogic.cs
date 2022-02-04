@@ -401,8 +401,17 @@ public class GameLogic
         var remainingPills = cells.Count(c => c.Value.IsPillAvailable);
         if (remainingPills == 0)
         {
-            Interlocked.Increment(ref gameStateValue);
-            log.LogInformation("No more pills available, changing game state to {gameState}", CurrentGameState);
+            var playerCount = cells.Count(c => c.Value.OccupiedBy != null);
+            if (playerCount <= 1)
+            {
+                Interlocked.Exchange(ref gameStateValue, 3);//game over
+                log.LogInformation("Only 1 player left, not going to battle mode - game over.");
+            }
+            else
+            {
+                Interlocked.Increment(ref gameStateValue);
+                log.LogInformation("No more pills available, changing game state to {gameState}", CurrentGameState);
+            }
         }
     }
 }
