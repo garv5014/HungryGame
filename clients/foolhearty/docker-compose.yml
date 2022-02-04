@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  foolhearty:
+    image: ${DOCKER_REGISTRY-}foolhearty
+    build:
+      context: ../..
+      dockerfile: clients/foolhearty/Dockerfile
+    environment:
+      SERVER: http://localhost:5291
