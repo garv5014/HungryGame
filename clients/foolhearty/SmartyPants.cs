@@ -33,71 +33,21 @@ public class SmartyPants : BasePlayerLogic
             moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
             if (moveResult?.ateAPill == false)
             {
+                logger.LogInformation("Didn't eat a pill...keep searching.");
                 continue;
             }
             var nextLocation = advance(moveResult?.newLocation, direction);
             Task<MoveResult> lastRequest = null;
             while (map.ContainsKey(nextLocation) && map[nextLocation].isPillAvailable)
             {
+                logger.LogInformation("In a groove!  Keep going!");
                 lastRequest = httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
                 nextLocation = advance(nextLocation, direction);
             }
             if (lastRequest != null)
             {
+                logger.LogInformation("Wait for response from most recent request");
                 moveResult = await lastRequest;
-            }
-        }
-
-        return;
-
-        //old logic *********************************************************
-        direction = "right";
-        var oldLocation = new Location(0, 0);
-        while (true)
-        {
-            logger.LogInformation("moving {direction}", direction);
-            moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
-
-            if (moveResult?.newLocation == oldLocation)
-            {
-                logger.LogInformation($"I can't go {direction} so I'll go {tryNextDirection(direction)}");
-                direction = tryNextDirection(direction);
-                oldLocation = moveResult?.newLocation;
-            }
-            else if (moveResult?.ateAPill == false)
-            {
-                //didn't eat a pill, better pick a new direction.
-                var nextLocation = advance(moveResult?.newLocation, direction);
-                do
-                {
-                    var destination = acquireTarget(moveResult?.newLocation, board);
-                    direction = inferDirection(moveResult?.newLocation, destination);
-
-                    logger.LogInformation($"Didn't eat a pill...moving {direction} toward next target.");
-                    moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
-                    nextLocation = advance(nextLocation, direction);
-                } while (moveResult?.ateAPill == false && map.ContainsKey(nextLocation));
-            }
-            else
-            {
-                var nextLocation = advance(moveResult?.newLocation, direction);
-                Task<MoveResult> lastRequest = null;
-                while (map != null && map.ContainsKey(nextLocation) && map[nextLocation].isPillAvailable)
-                {
-                    logger.LogInformation($"There's still a pill to my {direction} so I'll keep moving that way.");
-                    lastRequest = httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
-                    nextLocation = advance(nextLocation, direction);
-                }
-                logger.LogInformation("End of the road...where to now?");
-                if (lastRequest != null)
-                {
-                    var result = await lastRequest;
-                    oldLocation = result.newLocation;
-                }
-                else
-                {
-                    oldLocation = nextLocation;
-                }
             }
         }
     }
