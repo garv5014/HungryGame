@@ -27,7 +27,7 @@
             }
             InvokeAsync(() =>
             {
-                timeRemaining = gameInfo.TimeRemaining.Value.ToString(formatString);
+                timeRemaining = gameInfo?.TimeRemaining?.ToString(formatString) ?? "";
                 StateHasChanged();
             });
         };

@@ -235,39 +235,36 @@ public class GameLogic
         {
             player = players.FirstOrDefault(p => p.Token == playerToken);
             cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
-        //} cloning player fix?
 
-        if (player == null)
-        {
-            throw new PlayerNotFoundException();
-        }
+            if (player == null)
+            {
+                throw new PlayerNotFoundException();
+            }
 
-        markPlayerAsActive(player);
+            markPlayerAsActive(player);
 
-        var currentPlayer = cell?.OccupiedBy;
-        if (cell == null || currentPlayer == null)
-        {
-            throw new InvalidMoveException("Player is not currently on the board");
-        }
+            var currentPlayer = cell?.OccupiedBy;
+            if (cell == null || currentPlayer == null)
+            {
+                throw new InvalidMoveException("Player is not currently on the board");
+            }
 
-        var currentLocation = cell.Location;
+            var currentLocation = cell.Location;
 
-        if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle)
-        {
-            return new MoveResult(currentLocation, false);
-        }
+            if (CurrentGameState != GameState.Eating && CurrentGameState != GameState.Battle)
+            {
+                return new MoveResult(currentLocation, false);
+            }
 
-        var newLocation = direction switch
-        {
-            Direction.Up => currentLocation with { Row = currentLocation.Row - 1 },
-            Direction.Down => currentLocation with { Row = currentLocation.Row + 1 },
-            Direction.Left => currentLocation with { Column = currentLocation.Column - 1 },
-            Direction.Right => currentLocation with { Column = currentLocation.Column + 1 },
-            _ => throw new DirectionNotRecognizedException()
-        };
+            var newLocation = direction switch
+            {
+                Direction.Up => currentLocation with { Row = currentLocation.Row - 1 },
+                Direction.Down => currentLocation with { Row = currentLocation.Row + 1 },
+                Direction.Left => currentLocation with { Column = currentLocation.Column - 1 },
+                Direction.Right => currentLocation with { Column = currentLocation.Column + 1 },
+                _ => throw new DirectionNotRecognizedException()
+            };
 
-        //lock (lockForPlayersCellsPillValuesAndSpecialPontValues) cloning player fix?
-        //{
             if (!cells.ContainsKey(newLocation))
             {
                 moveResult = new MoveResult(currentLocation, false);

@@ -1,5 +1,6 @@
 using HungryGame;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 var requestErrorCount = 0L;
@@ -83,7 +84,15 @@ app.MapGet("/start", (int numRows, int numCols, string password, int? timeLimit,
     gameLogic.StartGame(gameStart);
 });
 app.MapGet("/reset", (string password, GameLogic gameLogic) => gameLogic.ResetGame(password));
-app.MapGet("/board", ([FromServices] GameLogic gameLogic) => gameLogic.GetBoardState());
+app.MapGet("/board", ([FromServices] GameLogic gameLogic, IMemoryCache memoryCache) =>
+{
+    return memoryCache.GetOrCreate("board",
+        cacheEntry =>
+        {
+            cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5);
+            return gameLogic.GetBoardState();
+        });
+});
 app.MapGet("/state", ([FromServices] GameLogic gameLogic) => gameLogic.CurrentGameState.ToString());
 
 app.Run();
