@@ -229,11 +229,13 @@ public class GameLogic
 
         Player player;
         Cell cell;
+        MoveResult moveResult;
+
         lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
         {
             player = players.FirstOrDefault(p => p.Token == playerToken);
             cell = cells.FirstOrDefault(kvp => kvp.Value.OccupiedBy?.Token == playerToken).Value;
-        }
+        //} cloning player fix?
 
         if (player == null)
         {
@@ -264,9 +266,8 @@ public class GameLogic
             _ => throw new DirectionNotRecognizedException()
         };
 
-        MoveResult moveResult;
-        lock (lockForPlayersCellsPillValuesAndSpecialPontValues)
-        {
+        //lock (lockForPlayersCellsPillValuesAndSpecialPontValues) cloning player fix?
+        //{
             if (!cells.ContainsKey(newLocation))
             {
                 moveResult = new MoveResult(currentLocation, false);
