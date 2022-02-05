@@ -98,47 +98,4 @@ public class Foolhearty : BasePlayerLogic
             }
         }
     }
-
-
-    private Location acquireTarget(Location curLocation, List<Cell> board)
-    {
-        var max = new Location(int.MaxValue, int.MaxValue);
-        var closest = max;
-        var minDistance = double.MaxValue;
-
-        foreach (var cell in board)
-        {
-            if (cell.isPillAvailable == false)
-            {
-                continue;
-            }
-            var a = curLocation.row - cell.location.row;
-            var b = curLocation.column - cell.location.column;
-            var newDistance = Math.Sqrt(a * a + b * b);
-            if (newDistance < minDistance)
-            {
-                minDistance = newDistance;
-                closest = cell.location;
-            }
-        }
-
-        if (closest == max)//e.g. didn't find a pill to eat...look for another player
-        {
-            var minScore = int.MaxValue;
-            foreach (var cell in board)
-            {
-                if (cell.occupiedBy == null || cell.location == curLocation)
-                {
-                    continue;
-                }
-                if (cell.occupiedBy.score < minScore)
-                {
-                    minScore = cell.occupiedBy.score;
-                    closest = cell.location;
-                }
-            }
-        }
-
-        return closest;
-    }
 }
