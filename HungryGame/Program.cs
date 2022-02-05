@@ -70,7 +70,15 @@ app.MapGet("/move/left", (string token, GameLogic gameLogic) => gameLogic.Move(t
 app.MapGet("/move/right", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Right));
 app.MapGet("/move/up", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Up));
 app.MapGet("/move/down", (string token, GameLogic gameLogic) => gameLogic.Move(token, Direction.Down));
-app.MapGet("/players", ([FromServices] GameLogic gameLogic) => gameLogic.GetPlayersByScoreDescending().Select(p => new { p.Name, p.Id, p.Score }));
+app.MapGet("/players", ([FromServices] GameLogic gameLogic, IMemoryCache memoryCache) =>
+{
+    return memoryCache.GetOrCreate("players", cacheEntry =>
+    {
+        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(1);
+        return gameLogic.GetPlayersByScoreDescending().Select(p => new { p.Name, p.Id, p.Score });
+    });
+
+});
 app.MapGet("/start", (int numRows, int numCols, string password, int? timeLimit, GameLogic gameLogic) =>
 {
     var gameStart = new NewGameInfo
@@ -84,15 +92,24 @@ app.MapGet("/start", (int numRows, int numCols, string password, int? timeLimit,
     gameLogic.StartGame(gameStart);
 });
 app.MapGet("/reset", (string password, GameLogic gameLogic) => gameLogic.ResetGame(password));
-app.MapGet("/board", ([FromServices] GameLogic gameLogic, IMemoryCache memoryCache) =>
+app.MapGet("/board", ([FromServices] GameLogic gameLogic, IMemoryCache memoryCache, ILogger<Program> logger) =>
 {
+    logger.LogInformation("Getting /board");
     return memoryCache.GetOrCreate("board",
         cacheEntry =>
         {
-            cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5);
+            logger.LogInformation("Cache expired.  Re-computing /board");
+            cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(1);
             return gameLogic.GetBoardState();
         });
 });
-app.MapGet("/state", ([FromServices] GameLogic gameLogic) => gameLogic.CurrentGameState.ToString());
+app.MapGet("/state", ([FromServices] GameLogic gameLogic, IMemoryCache memoryCache) =>
+{
+    return memoryCache.GetOrCreate("state", cacheEntry =>
+   {
+       cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(1);
+       return gameLogic.CurrentGameState.ToString();
+   });
+});
 
 app.Run();
