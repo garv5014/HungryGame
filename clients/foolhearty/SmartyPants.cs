@@ -29,11 +29,13 @@ public class SmartyPants : BasePlayerLogic
         {
             await refreshBoardAndMap();
             var destination = acquireTarget(moveResult?.newLocation, board);
+
             direction = inferDirection(moveResult?.newLocation, destination);
             moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
             if (moveResult?.ateAPill == false)
             {
                 logger.LogInformation("Didn't eat a pill...keep searching.");
+                moveResult = await moveFromTo(moveResult, destination);
                 continue;
             }
             var nextLocation = advance(moveResult?.newLocation, direction);
@@ -78,10 +80,37 @@ public class SmartyPants : BasePlayerLogic
         Interlocked.Exchange(ref map, newMap);
     }
 
-    public class MoveResult
+    private async Task<MoveResult> moveFromTo(MoveResult current, Location destination)
     {
-        public Location newLocation { get; set; }
-        public bool ateAPill { get; set; }
-    }
+        var rowDelta = destination.row - current.newLocation.row;
+        var colDelta = destination.column - current.newLocation.column;
 
+        var direction = rowDelta < 0 ? "up" : "down";
+        Task<MoveResult> result = null;
+        for (int i = 0; i < Math.Abs(rowDelta); i++)
+        {
+            result = httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
+        }
+
+        direction = colDelta < 0 ? "left" : "right";
+        for (int i = 0; i < Math.Abs(colDelta); i++)
+        {
+            result = httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
+        }
+
+        if (result != null)
+            return await result;
+
+        return new MoveResult { newLocation = destination };
+    }
+}
+
+public class MoveResult
+{
+    public Location newLocation { get; set; }
+    public bool ateAPill { get; set; }
+}
+
+public static class Extensions
+{
 }
