@@ -5,7 +5,7 @@ namespace foolhearty;
 
 public abstract class BasePlayerLogic : IPlayerLogic
 {
-    protected HttpClient httpClient = new HttpClient();
+    protected HttpClient httpClient = new();
     protected string url = "";
     protected string? token;
     protected readonly IConfiguration config;
@@ -36,24 +36,38 @@ public abstract class BasePlayerLogic : IPlayerLogic
         "down" => "left",
         "left" => "up",
         "up" => "right",
-        "right" => "down"
+        "right" => "down",
+        _ => throw new NotImplementedException()
     };
 
     protected virtual Location acquireTarget(Location curLocation, List<Cell> board)
     {
         var max = new Location(int.MaxValue, int.MaxValue);
+
+        Location closest = findClosestPillToEat(curLocation, board, max);
+
+        if (closest == max)//e.g. didn't find a pill to eat...look for another player
+        {
+            closest = findNearestPlayerToAttack(curLocation, board, max, closest);
+        }
+
+        return closest;
+    }
+
+    protected virtual Location findClosestPillToEat(Location curLocation, List<Cell> board, Location max)
+    {
         var closest = max;
         var minDistance = double.MaxValue;
 
         foreach (var cell in board)
         {
-            if (cell.isPillAvailable == false)
+            if (!cell.isPillAvailable)
             {
                 continue;
             }
             var a = curLocation.row - cell.location.row;
             var b = curLocation.column - cell.location.column;
-            var newDistance = Math.Sqrt(a * a + b * b);
+            var newDistance = Math.Sqrt((a * a) + (b * b));
             if (newDistance < minDistance)
             {
                 minDistance = newDistance;
@@ -61,20 +75,22 @@ public abstract class BasePlayerLogic : IPlayerLogic
             }
         }
 
-        if (closest == max)//e.g. didn't find a pill to eat...look for another player
+        return closest;
+    }
+
+    protected virtual Location findNearestPlayerToAttack(Location curLocation, List<Cell> board, Location max, Location closest)
+    {
+        var minScore = int.MaxValue;
+        foreach (var cell in board)
         {
-            var minScore = int.MaxValue;
-            foreach (var cell in board)
+            if (cell.occupiedBy == null || cell.location == curLocation)
             {
-                if (cell.occupiedBy == null || cell.location == curLocation)
-                {
-                    continue;
-                }
-                if (cell.occupiedBy.score < minScore)
-                {
-                    minScore = cell.occupiedBy.score;
-                    closest = cell.location;
-                }
+                continue;
+            }
+            if (cell.occupiedBy.score < minScore)
+            {
+                minScore = cell.occupiedBy.score;
+                closest = cell.location;
             }
         }
 
@@ -104,13 +120,13 @@ public abstract class BasePlayerLogic : IPlayerLogic
         while (gameState == "Joining" || gameState == "GameOver")
         {
             await Task.Delay(2_000, cancellationToken);
-            gameState = await httpClient.GetStringAsync($"{url}/state");
+            gameState = await httpClient.GetStringAsync($"{url}/state", cancellationToken);
         }
     }
 
     protected async Task<List<Cell>> getBoardAsync()
     {
         var boardString = await httpClient.GetStringAsync($"{url}/board");
-        return JsonSerializer.Deserialize<IEnumerable<Cell>>(boardString).ToList();
+        return JsonSerializer.Deserialize<IEnumerable<Cell>>(boardString)?.ToList() ?? throw new MissingBoardException();
     }
 }

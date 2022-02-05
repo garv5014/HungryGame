@@ -34,8 +34,9 @@ public class SmartyPants : BasePlayerLogic
             moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
             if (moveResult?.ateAPill == false)
             {
-                logger.LogInformation("Didn't eat a pill...keep searching.");
+                logger.LogInformation("Didn't eat a pill...keep searching.  Move from {from} to {destination}", moveResult.newLocation, destination);
                 moveResult = await moveFromTo(moveResult, destination);
+                logger.LogInformation("   moveResult={moveResult}", moveResult);
                 continue;
             }
             var nextLocation = advance(moveResult?.newLocation, direction);
@@ -52,6 +53,14 @@ public class SmartyPants : BasePlayerLogic
                 moveResult = await lastRequest;
             }
         }
+    }
+
+    protected override Location findNearestPlayerToAttack(Location curLocation, List<Cell> board, Location max, Location closest)
+    {
+        var nearestPlayer = base.findNearestPlayerToAttack(curLocation, board, max, closest);
+        var columnDelta = nearestPlayer.column - curLocation.column;
+        var rowDelta = nearestPlayer.row - curLocation.row;
+        return new Location(curLocation.row + (rowDelta * -1), curLocation.column + (columnDelta * -1));
     }
 
     private async Task refreshBoardAndMap()
