@@ -11,6 +11,9 @@ services:
 
   smartypants:
     image: ${DOCKER_REGISTRY-}foolhearty
+    build:
+      context: ../..
+      dockerfile: clients/foolhearty/Dockerfile
     environment:
       PLAY_STYLE: SmartyPants
       NAME: smartypants

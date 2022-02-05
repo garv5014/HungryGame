@@ -36,12 +36,12 @@ public class Foolhearty : BasePlayerLogic
     public override async Task PlayAsync(CancellationTokenSource cancellationTokenSource)
     {
         await waitForGameToStart(cancellationTokenSource.Token);
-        Console.WriteLine("Game started - making moves.");
+        logger.LogInformation("Game started - making moves.");
         Location currentLocation = new Location(0, 0);
         while (!cancellationTokenSource.IsCancellationRequested)
         {
             var board = await getBoardAsync();
-            logger.LogInformation("Got board state; {cellsWithPills} cells with pills remain", board.Count(c => c.isPillAvailable));
+            //logger.LogInformation("Got board state; {cellsWithPills} cells with pills remain", board.Count(c => c.isPillAvailable));
             try
             {
                 var destination = acquireTarget(currentLocation, board);
