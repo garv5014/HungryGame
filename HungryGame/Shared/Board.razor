@@ -19,7 +19,7 @@
         @for (int col = 0; col < gameInfo.MaxCols; col++)
         {
             var cell = gameInfo.GetCell(row, col) ?? throw new CellNotFoundException();
-            var classname = $"r{row}c{col}";
+            var classname = $"r{row}c{col} border";
 
             <div class=@classname>
                 @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : " "))
