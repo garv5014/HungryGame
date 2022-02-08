@@ -15,23 +15,37 @@ public class SmartyPants : BasePlayerLogic
         this.logger = logger;
     }
 
-    public override string PlayerName => "SmartyPants";
+    public override string PlayerName => config["PLAYER_NAME"] ?? "SmartyPants";
 
     public override async Task PlayAsync(CancellationTokenSource cancellationTokenSource)
     {
         logger.LogInformation("SmartyPants starting to play");
 
         var timer = new Timer(getBoard, null, 0, 1_000);
-
+        var lastLocation = new Location(0, 0);
         var direction = "right";
         var moveResult = new MoveResult { newLocation = new Location(0, 0) };
         while (true)
         {
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
+                logger.LogInformation("Cancellation request received!");
+                break;
+            }
+
             await refreshBoardAndMap();
             var destination = acquireTarget(moveResult?.newLocation, board);
 
             direction = inferDirection(moveResult?.newLocation, destination);
             moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
+
+            while (moveResult?.newLocation == lastLocation)//didn't move
+            {
+                logger.LogInformation($"Didn't move when I went {direction}, trying to go {tryNextDirection(direction)}");
+                direction = tryNextDirection(direction);
+                moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
+            }
+
             if (moveResult?.ateAPill == false)
             {
                 logger.LogInformation("Didn't eat a pill...keep searching.  Move from {from} to {destination}", moveResult.newLocation, destination);
@@ -87,6 +101,7 @@ public class SmartyPants : BasePlayerLogic
         var newMap = new Dictionary<Location, Cell>(newBoard.Select(c => new KeyValuePair<Location, Cell>(c.location, c)));
         Interlocked.Exchange(ref board, newBoard);
         Interlocked.Exchange(ref map, newMap);
+        logger.LogInformation("UPDATED BOARD");
     }
 
     private async Task<MoveResult> moveFromTo(MoveResult current, Location destination)

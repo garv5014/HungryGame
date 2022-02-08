@@ -57,7 +57,7 @@ public class Foolhearty : BasePlayerLogic
                     var newDirection = tryNextDirection(direction);
                     logger.LogInformation("Moving {lastDirection} didn't work, trying {newDirection} instead", direction, newDirection);
                     direction = newDirection;
-                    if (cancellationTokenSource.IsCancellationRequested || await checkIfGameOver())
+                    if (cancellationTokenSource.IsCancellationRequested)// || await checkIfGameOver())
                     {
                         break;
                     }
@@ -69,32 +69,32 @@ public class Foolhearty : BasePlayerLogic
                     currentLocation = new Location(currentRow, currentCol);
                 }
 
-                if (await checkIfGameOver())
-                {
-                    Console.WriteLine("Game over.  Waiting for next game.");
-                    while (true)
-                    {
-                        await Task.Delay(sleepTime, cancellationTokenSource.Token);
-                        errorCount++;
-                        sleepTime += 500;
-                        if (errorCount > 200)
-                        {
-                            errorCount = 0;
-                            return;
-                        }
-                    }
-                }
+                //if (await checkIfGameOver())
+                //{
+                //    Console.WriteLine("Game over.  Waiting for next game.");
+                //    while (true)
+                //    {
+                //        await Task.Delay(sleepTime, cancellationTokenSource.Token);
+                //        errorCount++;
+                //        sleepTime += 500;
+                //        if (errorCount > 200)
+                //        {
+                //            errorCount = 0;
+                //            return;
+                //        }
+                //    }
+                //}
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Uh oh...");
                 await Task.Delay(sleepTime, cancellationTokenSource.Token);
-                errorCount++;
-                sleepTime += 500;
-                if (errorCount > 200)
-                {
-                    return;
-                }
+                //errorCount++;
+                //sleepTime += 500;
+                //if (errorCount > 200)
+                //{
+                //    return;
+                //}
             }
         }
     }
