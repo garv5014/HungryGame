@@ -9,6 +9,8 @@ public class SmartyPants : BasePlayerLogic
     private readonly ILogger<SmartyPants> logger;
     private Dictionary<Location, Cell> map;
     private List<Cell> board;
+    private IEnumerable<PlayerInfo> players;
+    private string gameState;
 
     public SmartyPants(IConfiguration config, ILogger<SmartyPants> logger) : base(config)
     {
@@ -35,6 +37,13 @@ public class SmartyPants : BasePlayerLogic
 
             await refreshBoardAndMap();
             var destination = acquireTarget(moveResult?.newLocation, board);
+
+            if (gameState == "GameOver")
+            {
+                logger.LogInformation("Game over...wait a bit.");
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationTokenSource.Token);
+                continue;
+            }
 
             direction = inferDirection(moveResult?.newLocation, destination);
             moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
@@ -71,6 +80,18 @@ public class SmartyPants : BasePlayerLogic
 
     protected override Location findNearestPlayerToAttack(Location curLocation, List<Cell> board, Location max, Location closest)
     {
+        var myId = map[curLocation].occupiedBy?.id;
+        if (myId != null)
+        {
+            var otherPlayerSum = players.Where(p => p.id != myId.Value).Sum(p => p.score);
+            var myScore = players.Single(p => p.id == myId.Value).score;
+            if (myScore > otherPlayerSum) //do I have enough points to beat everyone?
+            {
+                return base.findNearestPlayerToAttack(curLocation, board, max, closest);
+            }
+        }
+
+        //if I don't have enough points to beat everyone, run away. :)
         var nearestPlayer = base.findNearestPlayerToAttack(curLocation, board, max, closest);
         var columnDelta = nearestPlayer.column - curLocation.column;
         var rowDelta = nearestPlayer.row - curLocation.row;
@@ -101,6 +122,12 @@ public class SmartyPants : BasePlayerLogic
         var newMap = new Dictionary<Location, Cell>(newBoard.Select(c => new KeyValuePair<Location, Cell>(c.location, c)));
         Interlocked.Exchange(ref board, newBoard);
         Interlocked.Exchange(ref map, newMap);
+
+        var newPlayers = await httpClient.GetFromJsonAsync<IEnumerable<PlayerInfo>>($"{url}/players");
+        Interlocked.Exchange(ref players, newPlayers);
+
+        var newGameState = await httpClient.GetStringAsync($"{url}/state");
+        Interlocked.Exchange(ref gameState, newGameState);
         logger.LogInformation("UPDATED BOARD");
     }
 
@@ -123,7 +150,13 @@ public class SmartyPants : BasePlayerLogic
         }
 
         if (result != null)
-            return await result;
+        {
+            try
+            {
+                return await result;
+            }
+            catch { }
+        }
 
         return new MoveResult { newLocation = destination };
     }
@@ -137,4 +170,11 @@ public class MoveResult
 
 public static class Extensions
 {
+}
+
+public class PlayerInfo
+{
+    public string name { get; set; }
+    public int id { get; set; }
+    public int score { get; set; }
 }
