@@ -1,23 +1,34 @@
-﻿@inject GameLogic gameInfo
+﻿@using System.Text
+@inject GameLogic gameInfo
 
-<table>
+<style>
+    .container {
+        display: grid;
+        grid-template-columns: @gridTemplateColumns;
+        grid-template-rows: @gridTemplateRows;
+        gap: 0px 0px;
+        grid-template-areas: @gridTemplateAreas()
+    }
+
+    @cellClasses()
+</style>
+
+<div class="container">
     @for (int row = 0; row < gameInfo.MaxRows; row++)
     {
-        <tr>
-            @for (int col = 0; col < gameInfo.MaxCols; col++)
-            {
-                var cell = gameInfo.GetCell(row, col) ?? throw new CellNotFoundException();
+        @for (int col = 0; col < gameInfo.MaxCols; col++)
+        {
+            var cell = gameInfo.GetCell(row, col) ?? throw new CellNotFoundException();
+            var classname = $"r{row}c{col}";
 
-                <td>
-                    @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : " "))
-                </td>
-            }
-        </tr>
+            <div class=@classname>
+                @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? (SharedState?.CellIcon ?? "?") : " "))
+            </div>
+        }
     }
-</table>
+</div>
 
 @code {
-    const string UnicodeFigureSpace_U2007 = " ";
 
     [CascadingParameter]
     public SharedStateClass SharedState{  get;  set; }
@@ -25,5 +36,36 @@
     protected override void OnInitialized()
     {
         gameInfo.GameStateChanged += (_, _) => InvokeAsync(() => StateHasChanged());
+    }
+
+    public string gridTemplateRows => String.Join(" ", Enumerable.Repeat("1fr", gameInfo.MaxRows));
+    public string gridTemplateColumns => String.Join(" ", Enumerable.Repeat("1fr", gameInfo.MaxCols));
+
+    public string gridTemplateAreas()
+    {
+        var sb = new StringBuilder();
+        for(int row=0;row<gameInfo.MaxRows;row++)
+        {
+            sb.Append("\"");
+            for(int col=0;col<gameInfo.MaxCols;col++)
+            {
+                sb.Append($"r{row}c{col} ");
+            }
+            sb.AppendLine("\"");
+        }
+        return sb.ToString();
+    }
+
+    public string cellClasses()
+    {
+        var sb = new StringBuilder();
+        for(int row=0;row<gameInfo.MaxRows;row++)
+        {
+            for(int col=0;col<gameInfo.MaxCols;col++)
+            {
+                sb.AppendLine($".r{row}c{col} {{grid-area: r{row}c{col};}} ");
+            }
+        }
+        return sb.ToString();
     }
 }
