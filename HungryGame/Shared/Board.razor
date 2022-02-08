@@ -2,7 +2,7 @@
 @inject GameLogic gameInfo
 
 <style>
-    .container {
+    .gridboard {
         display: grid;
         grid-template-columns: @gridTemplateColumns;
         grid-template-rows: @gridTemplateRows;
@@ -13,7 +13,7 @@
     @cellClasses()
 </style>
 
-<div class="container">
+<div class="gridboard">
     @for (int row = 0; row < gameInfo.MaxRows; row++)
     {
         @for (int col = 0; col < gameInfo.MaxCols; col++)
