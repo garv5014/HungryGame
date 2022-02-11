@@ -313,7 +313,7 @@ public record Cell(Location location, bool isPillAvailable, RedactedPlayer occup
 
 public class PlayerInfo
 {
-    public string name { get; set; }
-    public int id { get; set; }
-    public int score { get; set; }
+    public string Name { get; set; }
+    public int Id { get; set; }
+    public int Score { get; set; }
 }

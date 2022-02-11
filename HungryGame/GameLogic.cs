@@ -45,6 +45,18 @@ public class GameLogic
         this.random = random;
     }
 
+    public DateTime lastStateChange;
+    public TimeSpan stateChangeFrequency;
+
+    private void raiseStateChange()
+    {
+        if (lastStateChange + stateChangeFrequency < DateTime.Now)
+        {
+            GameStateChanged?.Invoke(this, EventArgs.Empty);
+            lastStateChange = DateTime.Now;
+        }
+    }
+
     public bool IsGameStarted => Interlocked.Read(ref gameStateValue) != 0;
     public GameState CurrentGameState => (GameState)Interlocked.Read(ref gameStateValue);
     public bool IsGameOver => Interlocked.Read(ref gameStateValue) == 3;
@@ -148,10 +160,15 @@ public class GameLogic
                 pillValues.Enqueue(i);
             }
 
+            if (players.Count > 20 || pillValues.Count > 10_000)
+                stateChangeFrequency = TimeSpan.FromMilliseconds(750);
+            else
+                stateChangeFrequency = TimeSpan.FromMilliseconds(250);
+
             Interlocked.Increment(ref gameStateValue);
         }
 
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        raiseStateChange();
     }
 
     public void ResetGame(string secretCode)
@@ -176,7 +193,7 @@ public class GameLogic
             }
         }
 
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        raiseStateChange();
     }
 
     public Cell GetCell(int row, int col) => cells[new Location(row, col)];
@@ -211,7 +228,7 @@ public class GameLogic
             }
         }
 
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        raiseStateChange();
         return token;
     }
 
@@ -286,7 +303,7 @@ public class GameLogic
                 }
             }
         }
-        GameStateChanged?.Invoke(this, EventArgs.Empty);
+        raiseStateChange();
         return moveResult;
     }
 

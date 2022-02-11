@@ -1,0 +1,70 @@
+﻿@using System.Text
+@inject HttpClient httpClient
+@inject ViewerInfo gameInfo
+
+<style>
+    .gridboard {
+        display: grid;
+        grid-template-columns: @gridTemplateColumns;
+        grid-template-rows: @gridTemplateRows;
+        gap: 0px 0px;
+        grid-template-areas: @gridTemplateAreas()
+    }
+
+    @cellClasses()
+</style>
+
+<div class="gridboard">
+    @for (int row = 0; row < gameInfo.MaxRows; row++)
+    {
+        @for (int col = 0; col < gameInfo.MaxColumns; col++)
+        {
+            var cell = gameInfo.GetCell(row, col) ?? throw new Exception("Cell not found");
+            var classname = $"r{row}c{col} border";
+
+            <div class=@classname>
+                @(cell.OccupiedBy?.Id.ToString() ?? (cell.IsPillAvailable ? ("🌯" ?? "?") : " "))
+            </div>
+        }
+    }
+</div>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        //Board =
+    }
+
+    private List<Cell> cells;
+    public string gridTemplateRows => String.Join(" ", Enumerable.Repeat("1fr", gameInfo.MaxRows));
+    public string gridTemplateColumns => String.Join(" ", Enumerable.Repeat("1fr", gameInfo.MaxColumns));
+
+    public string gridTemplateAreas()
+    {
+        var sb = new StringBuilder();
+        for(int row=0;row<gameInfo.MaxRows;row++)
+        {
+            sb.Append("\"");
+            for(int col=0;col<gameInfo.MaxColumns;col++)
+            {
+                sb.Append($"r{row}c{col} ");
+            }
+            sb.AppendLine("\"");
+        }
+        return sb.ToString();
+    }
+
+    public string cellClasses()
+    {
+        var sb = new StringBuilder();
+        for(int row=0;row<gameInfo.MaxRows;row++)
+        {
+            for(int col=0;col<gameInfo.MaxColumns;col++)
+            {
+                sb.AppendLine($".r{row}c{col} {{grid-area: r{row}c{col};}} ");
+            }
+        }
+        return sb.ToString();
+    }
+}
