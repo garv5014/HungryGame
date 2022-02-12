@@ -14,6 +14,8 @@
     @cellClasses()
 </style>
 
+<p>There are @gameInfo.MaxColumns columns!</p>
+
 <div class="gridboard">
     @for (int row = 0; row < gameInfo.MaxRows; row++)
     {
@@ -31,12 +33,14 @@
 
 @code {
 
+
+@code
+{
     protected override void OnInitialized()
     {
-        //Board =
+        gameInfo.UpdateTick += (_, _) => InvokeAsync(() => StateHasChanged());
     }
-
-    private List<Cell> cells;
+}
     public string gridTemplateRows => String.Join(" ", Enumerable.Repeat("1fr", gameInfo.MaxRows));
     public string gridTemplateColumns => String.Join(" ", Enumerable.Repeat("1fr", gameInfo.MaxColumns));
 
