@@ -48,7 +48,7 @@ public class SmartyPants : BasePlayerLogic
             direction = inferDirection(moveResult?.newLocation, destination);
             moveResult = await httpClient.GetFromJsonAsync<MoveResult>($"{url}/move/{direction}?token={token}");
 
-            while (moveResult?.newLocation == lastLocation)//didn't move
+            while (moveResult?.newLocation == lastLocation && !cancellationTokenSource.IsCancellationRequested)//didn't move
             {
                 logger.LogInformation($"Didn't move when I went {direction}, trying to go {tryNextDirection(direction)}");
                 direction = tryNextDirection(direction);
