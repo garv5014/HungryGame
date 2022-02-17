@@ -59,6 +59,7 @@ public class SmartyPants : BasePlayerLogic
             {
                 logger.LogInformation("Didn't eat a pill...keep searching.  Move from {from} to {destination}", moveResult.newLocation, destination);
                 moveResult = await moveFromTo(moveResult, destination);
+                lastLocation = moveResult?.newLocation;
                 logger.LogInformation("   moveResult={moveResult}", moveResult);
                 continue;
             }
@@ -162,7 +163,7 @@ public class SmartyPants : BasePlayerLogic
     }
 }
 
-public class MoveResult
+public record MoveResult
 {
     public Location newLocation { get; set; }
     public bool ateAPill { get; set; }
