@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   foolhearty:
-    image: ${DOCKER_REGISTRY-}foolhearty
+    image: snowjallen/foolhearty
     build:
       context: ../..
       dockerfile: clients/foolhearty/Dockerfile
@@ -10,7 +10,7 @@ services:
       # SERVER: http://localhost:5291
 
   smartypants:
-    image: ${DOCKER_REGISTRY-}foolhearty
+    image: snowjallen/foolhearty
     build:
       context: ../..
       dockerfile: clients/foolhearty/Dockerfile

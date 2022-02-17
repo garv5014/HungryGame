@@ -54,7 +54,7 @@ public class Foolhearty : BasePlayerLogic
                 var newLocation = new Location(currentRow, currentCol);
                 if (newLocation == currentLocation)//we didn't move
                 {
-                    var newDirection = tryNextDirection(direction);
+                    var newDirection = tryNextDirection(direction, board, newLocation);
                     logger.LogInformation("Moving {lastDirection} didn't work, trying {newDirection} instead", direction, newDirection);
                     direction = newDirection;
                     if (cancellationTokenSource.IsCancellationRequested)// || await checkIfGameOver())

@@ -31,14 +31,43 @@ public abstract class BasePlayerLogic : IPlayerLogic
         return (await httpClient.GetStringAsync($"{url}/state")) == "GameOver";
     }
 
-    protected virtual private string tryNextDirection(string direction) => direction switch
+    protected virtual string turn(string direction) => direction switch
     {
-        "down" => "left",
-        "left" => "up",
         "up" => "right",
         "right" => "down",
-        _ => throw new NotImplementedException()
+        "down" => "left",
+        "left" => "up",
+        _ => throw new Exception("What sort of direction are you trying to go?")
     };
+
+    protected virtual private string tryNextDirection(string direction, List<Cell> board, Location currentLocation)
+    {
+        var possibleDirections = new List<string>(new[] { "up", "right", "down", "left" });
+        possibleDirections.Remove(direction);
+        if (currentLocation.column == 0)
+            possibleDirections.Remove("left");
+        else if (currentLocation.row == 0)
+            possibleDirections.Remove("up");
+        else if (currentLocation.column == board.Max(c => c.location.column))
+            possibleDirections.Remove("right");
+        else if (currentLocation.row == board.Max(c => c.location.row))
+            possibleDirections.Remove("down");
+
+        var availableNeighbors = new Dictionary<Location, Cell>(board.Where(c => c.location.column >= currentLocation.column - 1 && c.location.column <= currentLocation.column + 1 &&
+                                                  c.location.row >= currentLocation.row - 1 && c.location.row <= currentLocation.row + 1 &&
+                                                  c.occupiedBy == null).Select(c => new KeyValuePair<Location, Cell>(c.location, c)));
+        var left = new Location(currentLocation.row, currentLocation.column - 1);
+        var right = new Location(currentLocation.row, currentLocation.column + 1);
+        var up = new Location(currentLocation.row - 1, currentLocation.column);
+
+        if (possibleDirections.Contains("left") && availableNeighbors.ContainsKey(left))
+            return "left";
+        if (possibleDirections.Contains("right") && availableNeighbors.ContainsKey(right))
+            return "right";
+        if (possibleDirections.Contains("up") && availableNeighbors.ContainsKey(up))
+            return "up";
+        return "down";
+    }
 
     protected virtual Location acquireTarget(Location curLocation, List<Cell> board)
     {
