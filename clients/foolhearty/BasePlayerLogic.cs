@@ -40,7 +40,15 @@ public abstract class BasePlayerLogic : IPlayerLogic
         _ => throw new Exception("What sort of direction are you trying to go?")
     };
 
-    protected virtual private string tryNextDirection(string direction, List<Cell> board, Location currentLocation)
+    protected virtual string tryNextDirection(string direction) => direction switch
+    {
+        "up" => "right",
+        "right" => "down",
+        "down" => "left",
+        _ => "up"
+    };
+
+    protected virtual string tryNextDirection(string direction, List<Cell> board, Location currentLocation)
     {
         var possibleDirections = new List<string>(new[] { "up", "right", "down", "left" });
         possibleDirections.Remove(direction);
