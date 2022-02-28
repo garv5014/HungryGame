@@ -27,13 +27,13 @@
 # Improvements for next time
 - [ ] Rate limit 10 actions / second
 - [ ] Fog of war, only return the 20 cells in every direction
-- [ ] Not two rounds, but let people attack immediately
+- [ ] Remove the /board endpoint, you only get board status as a response from a valid action
+- [ ] Not two separate rounds, but let people attack immediately
+- [ ] Allow multiple occupants per cell
 - [ ] Separate /move /eat and /attack commands
 - [ ] Variable pill values
-- [ ] Allow multiple occupants per cell
 - [ ] Every call to /eat only gets you 1 point.  Deduct remaining value of pill by 1.  Allows for concurrent eating of a single pill by multiple players
-- [ ] Everyone loses x points every y milliseconds
-- [ ] Add poison pills that deduct x points
+- [ ] Everyone loses x points every y amount of time
 - [ ] Add different power-ups 
     - invincibility for y seconds
     - speed mode - doubles your action rate
