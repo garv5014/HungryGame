@@ -8,8 +8,8 @@
   - [x] when you die, you drop a pill worth 50% on the cell you just vacated
 - [ ] respawn pills on a random interval at a random location for a random point value
 - [x] add a /board endpoint returning state of board [{location, pillValue, playerId}]
-- [ ] Add an automatic game timer that continually restarts the game every x minutes
-- [ ] Add logic to automatically boot any players that didn't move during the last game
+- [x] Add an automatic game timer that continually restarts the game every x minutes
+- [x] Add logic to automatically boot any players that didn't move during the last game
 
 # Bugs
 - ☑ Table shrinks when no pills in a row/column, it should stay the same size.
