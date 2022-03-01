@@ -25,7 +25,7 @@
 - One(?) round battle royale, no holds barred - you program it, you run it (max 64 clients per contestant)
 
 # Improvements for next time
-- [ ] Rate limit 10 actions / second
+- [ ] Rate limit 10 actions / second (maybe something [like this](https://code-maze.com/aspnetcore-web-api-rate-limiting/)?)
 - [ ] Fog of war, only return the 20 cells in every direction
 - [ ] Remove the /board endpoint, you only get board status as a response from a valid action
 - [ ] Not two separate rounds, but let people attack immediately
