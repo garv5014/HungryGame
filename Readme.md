@@ -1,4 +1,12 @@
-﻿# Improvements
+﻿# Hungry Game
+
+## Premise
+
+- Eat pills
+- Once all the *initial* pills are gone, battle mode commences until 1 player left standing.
+
+## Improvements for Spring 2022
+
 - [x] Increase point value of pills as remaining quantity decreases  
   - [x] pills start off at 1.  every pill eaten increases by 1 point.  
 - [x] return {ateAPill, newLocation} from /move
@@ -11,20 +19,14 @@
 - [x] Add an automatic game timer that continually restarts the game every x minutes
 - [x] Add logic to automatically boot any players that didn't move during the last game
 
-# Bugs
-- ☑ Table shrinks when no pills in a row/column, it should stay the same size.
-- 
+## Tournament
 
-# Premise
-- Eat pills
-- Once all the *initial* pills are gone, battle mode commences until 1 player left standing.
-
-# Tournament
 - One round of p v p
 - One round of single automated vs single automated
 - One(?) round battle royale, no holds barred - you program it, you run it (max 64 clients per contestant)
 
-# Improvements for next time
+## Improvements for Fall 2022
+
 - [ ] Rate limit 10 actions / second (maybe something [like this](https://code-maze.com/aspnetcore-web-api-rate-limiting/)?)
 - [ ] Fog of war, only return the 20 cells in every direction
 - [ ] Remove the /board endpoint, you only get board status as a response from a valid action
@@ -34,9 +36,9 @@
 - [ ] Variable pill values
 - [ ] Every call to /eat only gets you 1 point.  Deduct remaining value of pill by 1.  Allows for concurrent eating of a single pill by multiple players
 - [ ] Everyone loses x points every y amount of time
-- [ ] Add different power-ups 
-    - invincibility for y seconds
-    - speed mode - doubles your action rate
-    - poison pills
-    - super eater - every call to /eat gets 5x points for y seconds
+- [ ] Add different power-ups
+  - [ ] invincibility for y seconds
+  - [ ] speed mode - doubles your action rate
+  - [ ] poison pills
+  - [ ] super eater - every call to /eat gets 5x points for y seconds
 - [ ] Add a coding challenge hall of fame on engineering.snow.edu, include winners for game of life, risk, hungry game v1 and add to that
