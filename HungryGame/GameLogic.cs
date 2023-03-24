@@ -1,4 +1,6 @@
-﻿namespace HungryGame;
+﻿using System.Security.Cryptography.X509Certificates;
+
+namespace HungryGame;
 
 public enum GameState
 {
@@ -33,16 +35,18 @@ public class GameLogic
     private readonly IConfiguration config;
     private readonly ILogger<GameLogic> log;
     private readonly IRandomService random;
+    private readonly Counters _counters;
 
     public int MaxRows { get; private set; } = 0;
     public int MaxCols { get; private set; } = 0;
     public event EventHandler? GameStateChanged;
 
-    public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random)
+    public GameLogic(IConfiguration config, ILogger<GameLogic> log, IRandomService random, Counters counters)
     {
         this.config = config ?? throw new ArgumentNullException(nameof(config));
         this.log = log;
         this.random = random;
+        _counters = counters;
     }
 
     public DateTime lastStateChange;
@@ -273,13 +277,36 @@ public class GameLogic
                 return new MoveResult(currentLocation, false);
             }
 
-            var newLocation = direction switch
+            void UpdateHorizontalCounter()
             {
-                Direction.Up => currentLocation with { Row = currentLocation.Row - 1 },
-                Direction.Down => currentLocation with { Row = currentLocation.Row + 1 },
-                Direction.Left => currentLocation with { Column = currentLocation.Column - 1 },
-                Direction.Right => currentLocation with { Column = currentLocation.Column + 1 },
-                _ => throw new DirectionNotRecognizedException()
+                _counters.TotalHorizontalMovesPerPlayer.WithLabels(player.Token).Inc();
+            }
+
+            void UpdateVerticalCounter()
+            {
+                _counters.TotalVerticalMovesPerPlayer.WithLabels(player.Token).Inc();
+            }
+            Location newLocation;
+            switch (direction)
+            {
+                case Direction.Up:
+                    newLocation = currentLocation with { Row = currentLocation.Row - 1 };
+                    UpdateHorizontalCounter();
+                    break;
+                case Direction.Down:
+                    newLocation = currentLocation with { Row = currentLocation.Row + 1 };
+                    UpdateHorizontalCounter();
+                    break;
+                case Direction.Left:
+                    newLocation = currentLocation with { Column = currentLocation.Column - 1 };
+                    UpdateVerticalCounter();
+                    break;
+                case Direction.Right:
+                    newLocation = currentLocation with { Column = currentLocation.Column + 1 };
+                    UpdateVerticalCounter();
+                    break;
+                default:
+                    throw new DirectionNotRecognizedException();
             };
 
             if (!cells.ContainsKey(newLocation))
@@ -317,16 +344,20 @@ public class GameLogic
     {
         bool ateAPill = false;
         var origDestinationCell = cells[newLocation];
+
         if (origDestinationCell.IsPillAvailable)
         {
-            player.Score += getPointValue(newLocation);
+            var scoreIncrement = getPointValue(newLocation);
+            player.Score += scoreIncrement;
+            _counters.TotalScorePerPlayer.WithLabels(player.Token).Inc(scoreIncrement);
+            _counters.TotalPillsEatenPerPlayer.WithLabels(player.Token).Inc();
             ateAPill = true;
         }
         var newDestinationCell = origDestinationCell with { OccupiedBy = player, IsPillAvailable = false };
 
         var origSourceCell = cells[currentLocation];
         var newSourceCell = origSourceCell with { OccupiedBy = null };
-
+        _counters.TotalMovesPerPlayer.WithLabels(player.Token).Inc();
         log.LogInformation("Moving {playerName} from {oldLocation} to {newLocation} ({ateNewPill})", player.Name, currentLocation, newLocation, origDestinationCell.IsPillAvailable);
 
         cells[newLocation] = newDestinationCell;
@@ -342,7 +373,6 @@ public class GameLogic
         //decrease the health of both players by the min health of the players
         var minHealth = Math.Min(currentPlayer.Score, otherPlayer.Score);
         log.LogInformation("Player {currentPlayer} attacking {otherPlayer}", currentPlayer, otherPlayer);
-
         currentPlayer.Score -= minHealth;
         otherPlayer.Score -= minHealth;
         log.LogInformation("new scores: {currentPlayerScore}, {otherPlayerScore}", currentPlayer.Score, otherPlayer.Score);
@@ -353,6 +383,7 @@ public class GameLogic
             checkForWinner();
         }
 
+        _counters.TotalAttacksPerPlayer.WithLabels(currentPlayer.Token).Inc();
         return new MoveResult(currentLocation, false);
     }
 

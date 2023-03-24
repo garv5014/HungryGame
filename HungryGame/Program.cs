@@ -1,6 +1,7 @@
 using HungryGame;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 var requestErrorCount = 0L;
@@ -8,6 +9,7 @@ var requestErrorCount = 0L;
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddSingleton<Counters>();
 builder.Services.AddSingleton<GameLogic>();
 builder.Services.AddSingleton<IRandomService, SystemRandomService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -34,6 +36,7 @@ app.UseCors(builder =>
 });
 
 app.UseStaticFiles();
+app.UseMetricServer();
 
 //THROW_ERRORS middleware
 app.Use(async (context, next) =>
