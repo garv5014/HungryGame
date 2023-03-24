@@ -194,9 +194,12 @@ public class GameLogic
             foreach (var p in players)
             {
                 p.Score = 0;
+                _counters.TotalAttacksPerPlayer.WithLabels(p.Token).IncTo(0);
+                _counters.TotalVerticalMovesPerPlayer.WithLabels(p.Token).IncTo(0);
+                _counters.TotalHorizontalMovesPerPlayer.WithLabels(p.Token).IncTo(0);
             }
         }
-
+        _counters.TotalAttacksPerGame.IncTo(0);
         raiseStateChange();
     }
 
@@ -291,19 +294,19 @@ public class GameLogic
             {
                 case Direction.Up:
                     newLocation = currentLocation with { Row = currentLocation.Row - 1 };
-                    UpdateHorizontalCounter();
+                    UpdateVerticalCounter();
                     break;
                 case Direction.Down:
                     newLocation = currentLocation with { Row = currentLocation.Row + 1 };
-                    UpdateHorizontalCounter();
+                    UpdateVerticalCounter();
                     break;
                 case Direction.Left:
                     newLocation = currentLocation with { Column = currentLocation.Column - 1 };
-                    UpdateVerticalCounter();
+                    UpdateHorizontalCounter();
                     break;
                 case Direction.Right:
                     newLocation = currentLocation with { Column = currentLocation.Column + 1 };
-                    UpdateVerticalCounter();
+                    UpdateHorizontalCounter();
                     break;
                 default:
                     throw new DirectionNotRecognizedException();
@@ -377,12 +380,18 @@ public class GameLogic
         otherPlayer.Score -= minHealth;
         log.LogInformation("new scores: {currentPlayerScore}, {otherPlayerScore}", currentPlayer.Score, otherPlayer.Score);
 
-        if (removePlayerIfDead(currentPlayer) || removePlayerIfDead(otherPlayer))
+        var currentPlayerDies = removePlayerIfDead(currentPlayer);
+        var otherPlayerDies = removePlayerIfDead(otherPlayer);
+
+        if (currentPlayerDies) _counters.TotalKillsPerPlayer.WithLabels(otherPlayer.Token).Inc();
+        if (otherPlayerDies) _counters.TotalKillsPerPlayer.WithLabels(currentPlayer.Token).Inc();
+        if (currentPlayerDies || otherPlayerDies)
         {
             specialPointValues.TryAdd(newLocation, (int)Math.Round(minHealth / 2.0, 0));
             checkForWinner();
         }
 
+        _counters.TotalAttacksPerGame.Inc();
         _counters.TotalAttacksPerPlayer.WithLabels(currentPlayer.Token).Inc();
         return new MoveResult(currentLocation, false);
     }
